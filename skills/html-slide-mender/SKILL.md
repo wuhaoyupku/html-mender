@@ -1,6 +1,13 @@
 ---
 name: html-slide-mender
 description: Use this skill whenever the user wants to visually edit a local HTML file, AI-generated HTML presentation, webpage saved as HTML, or "HTML PPT" without editing source code. It injects a self-contained editor into a local HTML copy so the user can edit text and images in the browser, then download a clean HTML file. Do not use it for live online websites; ask the user to provide or save a local HTML file first.
+version: 0.1.0
+metadata:
+  openclaw:
+    homepage: https://github.com/wuhaoyupku/html-slide-mender
+    requires:
+      bins:
+        - node
 ---
 
 # HTML Slide Mender
