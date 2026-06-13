@@ -1,0 +1,19 @@
+export const CONTENT_SCRIPT_FILES = [
+  "vendor/pickr.min.js",
+  "vendor/pickr-nano-css.js",
+  "src/content/modules/config.js",
+  "src/content/modules/utils.js",
+  "src/content/modules/selection.js",
+  "src/content/modules/styles.js",
+  "src/content/modules/lifecycle.js",
+  "src/content/modules/color.js",
+  "src/content/modules/ui.js",
+  "src/content/modules/scanner.js",
+  "src/content/modules/text.js",
+  "src/content/modules/image.js",
+  "src/content/modules/history.js",
+  "src/content/modules/exporter.js",
+  "src/content/modules/draft.js",
+  "src/content/modules/editor-app.js",
+  "src/content/editor.js"
+];

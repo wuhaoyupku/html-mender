@@ -1,0 +1,16 @@
+{
+  "name": "html-slide-mender-extension",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build:ui-kit": "node scripts/build-ui-kit.mjs",
+    "check": "node scripts/validate-extension.mjs && node scripts/check-js.mjs",
+    "smoke": "node scripts/smoke-page.mjs"
+  },
+  "devDependencies": {
+    "@vaadin/combo-box": "24.9.16",
+    "esbuild": "0.28.1"
+  }
+}

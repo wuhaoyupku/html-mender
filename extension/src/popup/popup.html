@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HTML Slide Mender</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main class="panel">
+      <header class="header">
+        <div>
+          <h1>Slide Mender</h1>
+          <p data-i18n="subtitle">HTML 幻灯片本地可视化编辑。</p>
+        </div>
+      </header>
+
+      <section class="status" id="status">已准备好编辑当前标签页。</section>
+
+      <label class="language">
+        <span data-i18n="language">语言</span>
+        <select id="language">
+          <option value="zh-CN">中文</option>
+          <option value="en">English</option>
+        </select>
+      </label>
+
+      <label class="setting-row">
+        <span data-i18n="saveMode">保存方式</span>
+        <select id="export-mode">
+          <option value="basic" data-i18n="basicHtml">基础 HTML</option>
+          <option value="full" data-i18n="fullHtml">完整 HTML</option>
+        </select>
+      </label>
+
+      <div class="actions">
+        <button class="primary" id="start" type="button" data-i18n="start">开始编辑</button>
+        <button id="toggle-boxes" type="button" data-i18n="toggleBoxes">显示 / 隐藏编辑框</button>
+        <button id="download" type="button" data-i18n="download">下载 HTML</button>
+        <button class="danger" id="exit" type="button" data-i18n="exit">退出编辑</button>
+      </div>
+
+      <p class="note" data-i18n="note">插件只会在你点击后运行，并导出本地 HTML 副本。</p>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

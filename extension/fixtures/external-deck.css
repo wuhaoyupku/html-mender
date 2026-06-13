@@ -1,0 +1,7 @@
+.slide {
+  --hsm-external-css: loaded;
+}
+
+.media {
+  outline: 0 solid transparent;
+}

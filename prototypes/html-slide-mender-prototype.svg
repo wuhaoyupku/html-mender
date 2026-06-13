@@ -1,0 +1,211 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="960" viewBox="0 0 1440 960">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#233047" flood-opacity="0.16"/>
+    </filter>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#1b2638" flood-opacity="0.12"/>
+    </filter>
+    <linearGradient id="photoGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#45b7a8"/>
+      <stop offset="52%" stop-color="#f5c96a"/>
+      <stop offset="100%" stop-color="#ee7a6f"/>
+    </linearGradient>
+    <linearGradient id="slideGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7faf8"/>
+      <stop offset="100%" stop-color="#eef3f7"/>
+    </linearGradient>
+    <style>
+      .sans { font-family: Inter, "PingFang SC", "Microsoft YaHei", Arial, sans-serif; }
+      .serif { font-family: Georgia, "Times New Roman", serif; }
+      .small { font-size: 14px; }
+      .tiny { font-size: 12px; }
+      .label { font-size: 13px; fill: #526071; }
+      .tooltext { font-size: 13px; fill: #253044; font-weight: 600; }
+      .title { font-size: 20px; fill: #1f2937; font-weight: 700; }
+      .muted { fill: #6a7688; }
+      .boxText { font-size: 15px; fill: #2a3546; }
+    </style>
+  </defs>
+
+  <rect width="1440" height="960" fill="#dfe7ef"/>
+
+  <!-- Browser frame -->
+  <rect x="42" y="34" width="1356" height="878" rx="18" fill="#f9fbfd" filter="url(#shadow)"/>
+  <rect x="42" y="34" width="1356" height="64" rx="18" fill="#f2f5f8"/>
+  <rect x="42" y="82" width="1356" height="16" fill="#f2f5f8"/>
+  <circle cx="72" cy="66" r="7" fill="#f05f57"/>
+  <circle cx="94" cy="66" r="7" fill="#f7bd2e"/>
+  <circle cx="116" cy="66" r="7" fill="#28c840"/>
+  <rect x="156" y="50" width="760" height="32" rx="16" fill="#ffffff" stroke="#d7dee8"/>
+  <text x="178" y="71" class="sans small muted">file:///ai-deck/product-launch.html</text>
+  <rect x="1220" y="48" width="132" height="36" rx="18" fill="#1e6fff"/>
+  <text x="1240" y="71" class="sans small" fill="#ffffff" font-weight="700">编辑模式 ON</text>
+
+  <!-- Plugin top toolbar -->
+  <rect x="42" y="98" width="1356" height="82" fill="#ffffff" stroke="#d9e1ea"/>
+  <rect x="66" y="118" width="170" height="42" rx="8" fill="#1f2937"/>
+  <text x="86" y="145" class="sans small" fill="#ffffff" font-weight="800">HTML Slide Mender</text>
+
+  <rect x="258" y="116" width="126" height="46" rx="8" fill="#f4f7fb" stroke="#d8e0ea"/>
+  <text x="272" y="134" class="sans tiny muted">字体</text>
+  <text x="272" y="153" class="sans tooltext">思源黑体</text>
+  <path d="M366 136 l6 6 l6 -6" fill="none" stroke="#566274" stroke-width="2"/>
+
+  <rect x="396" y="116" width="76" height="46" rx="8" fill="#f4f7fb" stroke="#d8e0ea"/>
+  <text x="410" y="134" class="sans tiny muted">字号</text>
+  <text x="410" y="153" class="sans tooltext">42</text>
+  <path d="M454 136 l6 6 l6 -6" fill="none" stroke="#566274" stroke-width="2"/>
+
+  <rect x="492" y="116" width="42" height="42" rx="8" fill="#f4f7fb" stroke="#d8e0ea"/>
+  <text x="506" y="145" class="sans" font-size="18" fill="#253044" font-weight="900">B</text>
+  <rect x="542" y="116" width="42" height="42" rx="8" fill="#f4f7fb" stroke="#d8e0ea"/>
+  <text x="558" y="145" class="serif" font-size="18" fill="#253044" font-style="italic">I</text>
+  <rect x="592" y="116" width="42" height="42" rx="8" fill="#f4f7fb" stroke="#d8e0ea"/>
+  <text x="605" y="145" class="sans" font-size="18" fill="#253044" text-decoration="underline">U</text>
+
+  <rect x="654" y="116" width="92" height="42" rx="8" fill="#f4f7fb" stroke="#d8e0ea"/>
+  <circle cx="678" cy="137" r="10" fill="#101827"/>
+  <text x="696" y="143" class="sans tooltext">文字色</text>
+
+  <rect x="758" y="116" width="92" height="42" rx="8" fill="#f4f7fb" stroke="#d8e0ea"/>
+  <rect x="778" y="128" width="20" height="18" rx="4" fill="#fff2a8" stroke="#e1c84f"/>
+  <text x="808" y="143" class="sans tooltext">高亮</text>
+
+  <rect x="870" y="116" width="42" height="42" rx="8" fill="#f4f7fb" stroke="#d8e0ea"/>
+  <path d="M882 129 h18 M882 137 h24 M882 145 h15" stroke="#253044" stroke-width="2" stroke-linecap="round"/>
+  <rect x="920" y="116" width="42" height="42" rx="8" fill="#f4f7fb" stroke="#d8e0ea"/>
+  <path d="M932 129 h22 M928 137 h30 M932 145 h22" stroke="#253044" stroke-width="2" stroke-linecap="round"/>
+  <rect x="970" y="116" width="42" height="42" rx="8" fill="#f4f7fb" stroke="#d8e0ea"/>
+  <path d="M994 129 h18 M988 137 h24 M997 145 h15" stroke="#253044" stroke-width="2" stroke-linecap="round"/>
+
+  <rect x="1032" y="116" width="114" height="42" rx="8" fill="#f4f7fb" stroke="#d8e0ea"/>
+  <text x="1052" y="143" class="sans tooltext">替换图片</text>
+
+  <rect x="1162" y="116" width="82" height="42" rx="8" fill="#f4f7fb" stroke="#d8e0ea"/>
+  <text x="1185" y="143" class="sans tooltext">撤销</text>
+  <rect x="1254" y="116" width="118" height="42" rx="8" fill="#1e6fff"/>
+  <text x="1288" y="143" class="sans tooltext" fill="#ffffff">下载 HTML</text>
+
+  <!-- Workspace background -->
+  <rect x="42" y="180" width="1356" height="732" fill="#eef3f7"/>
+
+  <!-- Left slide navigator -->
+  <rect x="66" y="204" width="174" height="684" rx="12" fill="#ffffff" stroke="#dbe3ec"/>
+  <text x="86" y="235" class="sans title">页面</text>
+  <rect x="86" y="258" width="132" height="76" rx="8" fill="#ffffff" stroke="#1e6fff" stroke-width="3"/>
+  <rect x="96" y="268" width="112" height="56" rx="5" fill="#f8fbfe"/>
+  <rect x="104" y="278" width="46" height="8" rx="4" fill="#202b3a"/>
+  <rect x="104" y="292" width="74" height="5" rx="2.5" fill="#7b8798"/>
+  <rect x="158" y="280" width="40" height="32" rx="5" fill="url(#photoGrad)"/>
+  <text x="100" y="354" class="sans tiny muted">01  封面页</text>
+
+  <rect x="86" y="382" width="132" height="76" rx="8" fill="#ffffff" stroke="#dbe3ec"/>
+  <rect x="96" y="392" width="112" height="56" rx="5" fill="#f8fbfe"/>
+  <rect x="104" y="402" width="90" height="7" rx="3.5" fill="#7b8798"/>
+  <rect x="104" y="418" width="48" height="30" rx="5" fill="#dfe8ef"/>
+  <rect x="160" y="418" width="34" height="30" rx="5" fill="#dfe8ef"/>
+  <text x="100" y="478" class="sans tiny muted">02  数据页</text>
+
+  <rect x="86" y="506" width="132" height="76" rx="8" fill="#ffffff" stroke="#dbe3ec"/>
+  <rect x="96" y="516" width="112" height="56" rx="5" fill="#f8fbfe"/>
+  <rect x="104" y="526" width="72" height="7" rx="3.5" fill="#7b8798"/>
+  <rect x="104" y="542" width="90" height="5" rx="2.5" fill="#b7c1ce"/>
+  <rect x="104" y="554" width="82" height="5" rx="2.5" fill="#b7c1ce"/>
+  <text x="100" y="602" class="sans tiny muted">03  总结页</text>
+
+  <!-- Slide canvas -->
+  <rect x="270" y="216" width="858" height="544" rx="4" fill="url(#slideGrad)" filter="url(#soft)"/>
+  <rect x="270" y="216" width="858" height="544" rx="4" fill="none" stroke="#d3dde8"/>
+  <text x="310" y="262" class="sans tiny muted">AI 生成的 HTML PPT 页面 / 当前可视区域</text>
+
+  <!-- Slide design -->
+  <rect x="310" y="302" width="468" height="116" rx="8" fill="#ffffff" stroke="#1e6fff" stroke-width="3" stroke-dasharray="8 6"/>
+  <circle cx="310" cy="302" r="6" fill="#1e6fff"/>
+  <circle cx="778" cy="302" r="6" fill="#1e6fff"/>
+  <circle cx="310" cy="418" r="6" fill="#1e6fff"/>
+  <circle cx="778" cy="418" r="6" fill="#1e6fff"/>
+  <text x="334" y="354" class="sans" font-size="40" fill="#111827" font-weight="800">让 HTML PPT</text>
+  <text x="334" y="396" class="sans" font-size="40" fill="#111827" font-weight="800">像 PPT 一样可编辑</text>
+
+  <!-- Floating text mini toolbar -->
+  <rect x="386" y="246" width="330" height="44" rx="10" fill="#1f2937" filter="url(#soft)"/>
+  <text x="408" y="274" class="sans small" fill="#ffffff" font-weight="700">文字块</text>
+  <rect x="476" y="256" width="1" height="24" fill="#4b5565"/>
+  <text x="498" y="274" class="sans small" fill="#ffffff">42px</text>
+  <circle cx="562" cy="268" r="9" fill="#111827" stroke="#ffffff"/>
+  <text x="594" y="274" class="sans small" fill="#ffffff">加粗</text>
+  <text x="658" y="274" class="sans small" fill="#ffffff">居中</text>
+
+  <rect x="326" y="452" width="360" height="84" rx="8" fill="#ffffff" stroke="#1e6fff" stroke-width="2" stroke-dasharray="6 5"/>
+  <text x="346" y="484" class="sans" font-size="20" fill="#364152">点击文字即可编辑，工具栏会作用于</text>
+  <text x="346" y="514" class="sans" font-size="20" fill="#364152">当前文本框或选中的文字范围。</text>
+
+  <rect x="748" y="298" width="328" height="286" rx="12" fill="#ffffff" stroke="#2fbf71" stroke-width="3" stroke-dasharray="8 6"/>
+  <clipPath id="imageClip">
+    <rect x="768" y="318" width="288" height="210" rx="10"/>
+  </clipPath>
+  <g clip-path="url(#imageClip)">
+    <rect x="768" y="318" width="288" height="210" fill="url(#photoGrad)"/>
+    <circle cx="837" cy="362" r="42" fill="#ffffff" opacity="0.35"/>
+    <path d="M768 506 C830 442, 884 468, 926 420 C966 374, 1010 388, 1056 342 L1056 528 L768 528 Z" fill="#172033" opacity="0.36"/>
+    <path d="M768 530 C838 488, 902 504, 958 454 C998 418, 1030 426, 1056 404 L1056 528 L768 528 Z" fill="#ffffff" opacity="0.23"/>
+  </g>
+  <text x="780" y="560" class="sans small muted">图片保持原容器，支持替换、缩放、拖动裁剪。</text>
+
+  <!-- Image handles and action pill -->
+  <circle cx="748" cy="298" r="6" fill="#2fbf71"/>
+  <circle cx="1076" cy="298" r="6" fill="#2fbf71"/>
+  <circle cx="748" cy="584" r="6" fill="#2fbf71"/>
+  <circle cx="1076" cy="584" r="6" fill="#2fbf71"/>
+  <rect x="810" y="594" width="210" height="42" rx="10" fill="#163525" filter="url(#soft)"/>
+  <text x="832" y="621" class="sans small" fill="#ffffff" font-weight="700">替换图片</text>
+  <text x="918" y="621" class="sans small" fill="#ffffff">缩放</text>
+  <text x="968" y="621" class="sans small" fill="#ffffff">重置</text>
+
+  <rect x="326" y="584" width="272" height="86" rx="10" fill="#fff9e6" stroke="#f2ca5c"/>
+  <text x="346" y="616" class="sans" font-size="22" fill="#222b37" font-weight="800">V0.1 只编辑内容</text>
+  <text x="346" y="648" class="sans" font-size="18" fill="#4b5563">不破坏 DIV 布局，不做复杂重排。</text>
+
+  <!-- Right inspector -->
+  <rect x="1152" y="204" width="222" height="684" rx="12" fill="#ffffff" stroke="#dbe3ec"/>
+  <text x="1174" y="236" class="sans title">属性</text>
+  <text x="1174" y="268" class="sans label">当前选中</text>
+  <rect x="1174" y="282" width="178" height="40" rx="8" fill="#eef5ff" stroke="#bdd4ff"/>
+  <text x="1190" y="307" class="sans tooltext" fill="#1e5ecb">标题文字块</text>
+
+  <text x="1174" y="354" class="sans label">文本内容</text>
+  <rect x="1174" y="366" width="178" height="82" rx="8" fill="#f8fafc" stroke="#dbe3ec"/>
+  <text x="1190" y="392" class="sans boxText">让 HTML PPT</text>
+  <text x="1190" y="420" class="sans boxText">像 PPT 一样可编辑</text>
+
+  <text x="1174" y="482" class="sans label">字号</text>
+  <rect x="1174" y="494" width="78" height="38" rx="8" fill="#f8fafc" stroke="#dbe3ec"/>
+  <text x="1192" y="518" class="sans tooltext">42 px</text>
+  <text x="1268" y="482" class="sans label">颜色</text>
+  <rect x="1268" y="494" width="84" height="38" rx="8" fill="#f8fafc" stroke="#dbe3ec"/>
+  <circle cx="1288" cy="513" r="10" fill="#111827"/>
+  <text x="1308" y="518" class="sans tiny muted">#111827</text>
+
+  <text x="1174" y="566" class="sans label">对齐</text>
+  <rect x="1174" y="578" width="178" height="40" rx="8" fill="#f8fafc" stroke="#dbe3ec"/>
+  <rect x="1184" y="586" width="46" height="24" rx="6" fill="#1e6fff"/>
+  <path d="M1195 593 h14 M1195 600 h22" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+  <path d="M1246 593 h22 M1241 600 h31" stroke="#253044" stroke-width="2" stroke-linecap="round"/>
+  <path d="M1295 593 h22 M1303 600 h14" stroke="#253044" stroke-width="2" stroke-linecap="round"/>
+
+  <text x="1174" y="654" class="sans label">导出</text>
+  <rect x="1174" y="668" width="178" height="42" rx="8" fill="#1e6fff"/>
+  <text x="1212" y="695" class="sans tooltext" fill="#ffffff">下载新 HTML</text>
+  <rect x="1174" y="722" width="178" height="42" rx="8" fill="#f8fafc" stroke="#dbe3ec"/>
+  <text x="1222" y="749" class="sans tooltext">退出编辑</text>
+
+  <rect x="1174" y="800" width="178" height="52" rx="8" fill="#f7faf8" stroke="#dbe3ec"/>
+  <text x="1190" y="822" class="sans tiny muted">提示</text>
+  <text x="1190" y="842" class="sans tiny" fill="#465365">保存时自动移除编辑框和工具栏。</text>
+
+  <!-- Bottom status bar -->
+  <rect x="270" y="786" width="858" height="68" rx="12" fill="#ffffff" stroke="#dbe3ec"/>
+  <circle cx="304" cy="820" r="9" fill="#2fbf71"/>
+  <text x="326" y="825" class="sans small muted">已识别 18 个文字块、7 张图片。当前修改会先保存在本页，点击下载生成新的 HTML 文件。</text>
+</svg>

@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  extension:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+
+      - name: Install dependencies
+        working-directory: extension
+        run: npm ci
+
+      - name: Install smoke-test browser tooling
+        working-directory: extension
+        run: |
+          npm install --no-save playwright@1.60.0
+          npx playwright install --with-deps chromium
+
+      - name: Static checks
+        working-directory: extension
+        run: npm run check
+
+      - name: Smoke test
+        working-directory: extension
+        run: npm run smoke

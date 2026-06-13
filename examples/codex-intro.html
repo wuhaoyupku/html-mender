@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Codex 简介 · 3 页 HTML PPT</title>
+  <style>
+    :root {
+      --paper: #f7f7f4;
+      --ink: #0a0a0a;
+      --muted: #5f6368;
+      --line: #d8d8d2;
+      --soft: #ecece8;
+      --accent: #002fa7;
+      --accent-on: #ffffff;
+      --font-sans: Inter, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      --font-mono: "SFMono-Regular", "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--font-sans);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(to right, rgba(10, 10, 10, 0.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(10, 10, 10, 0.06) 1px, transparent 1px);
+      background-size: 64px 64px;
+    }
+
+    #deck {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      display: flex;
+      width: 300vw;
+      height: 100vh;
+      transition: transform 620ms cubic-bezier(0.2, 0, 0, 1);
+      will-change: transform;
+    }
+
+    .slide {
+      position: relative;
+      flex: 0 0 100vw;
+      width: 100vw;
+      height: 100vh;
+      padding: 5.6vh 5vw 7vh;
+      overflow: hidden;
+      background: var(--paper);
+    }
+
+    .slide.accent {
+      background: var(--accent);
+      color: var(--accent-on);
+    }
+
+    .slide.split {
+      padding: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .chrome {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      line-height: 1.5;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .accent .chrome,
+    .accent .meta,
+    .accent .footer {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .meta {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      line-height: 1.5;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .hero-grid {
+      height: calc(100vh - 12.6vh);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 28px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    .hero-title {
+      align-self: center;
+      max-width: 920px;
+      font-size: 112px;
+      font-weight: 250;
+      line-height: 0.96;
+    }
+
+    .hero-title em {
+      font-style: italic;
+      font-weight: 320;
+    }
+
+    .hero-copy {
+      display: grid;
+      grid-template-columns: minmax(0, 680px) auto;
+      gap: 32px;
+      align-items: end;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.24);
+    }
+
+    .lead {
+      font-size: 24px;
+      line-height: 1.45;
+      color: rgba(255, 255, 255, 0.88);
+    }
+
+    .page-title {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-width: 920px;
+    }
+
+    .page-title h2 {
+      font-size: 78px;
+      font-weight: 250;
+      line-height: 1.02;
+    }
+
+    .work-stack {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+      margin-top: 44px;
+      min-height: 46vh;
+    }
+
+    .block {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 30px;
+      background: var(--soft);
+      border-radius: 0;
+    }
+
+    .block.accent {
+      background: var(--accent);
+      color: var(--accent-on);
+    }
+
+    .block.ink {
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .block .number {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .block.accent .number,
+    .block.ink .number {
+      color: rgba(255, 255, 255, 0.66);
+    }
+
+    .symbol {
+      width: 56px;
+      height: 56px;
+      display: grid;
+      place-items: center;
+      margin: 42px 0 26px;
+      border: 1px solid currentColor;
+      font-family: var(--font-mono);
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .block h3 {
+      font-size: 32px;
+      font-weight: 420;
+      line-height: 1.14;
+    }
+
+    .block p {
+      margin-top: 18px;
+      font-size: 18px;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+
+    .block.accent p,
+    .block.ink p {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .page-foot {
+      position: absolute;
+      left: 5vw;
+      right: 5vw;
+      bottom: 5.2vh;
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+
+    .half {
+      min-width: 0;
+      height: 100vh;
+      padding: 5.6vh 3.8vw 7vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .half.accent {
+      background: var(--accent);
+      color: var(--accent-on);
+    }
+
+    .half.accent::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0.18;
+      background-image:
+        radial-gradient(rgba(255, 255, 255, 0.75) 1px, transparent 1px);
+      background-size: 16px 16px;
+    }
+
+    .half > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .manifesto {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .manifesto .word {
+      font-size: 98px;
+      font-weight: 240;
+      line-height: 0.96;
+    }
+
+    .manifesto .word em {
+      font-style: italic;
+      font-weight: 320;
+    }
+
+    .manifesto p {
+      max-width: 420px;
+      margin-top: 22px;
+      font-size: 19px;
+      line-height: 1.65;
+      color: rgba(255, 255, 255, 0.84);
+    }
+
+    .rules {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .rule-item {
+      display: grid;
+      grid-template-columns: 82px 1fr;
+      gap: 26px;
+      padding: 30px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .rule-item:last-child {
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .rule-index {
+      font-size: 58px;
+      line-height: 0.92;
+      font-weight: 240;
+      color: var(--accent);
+    }
+
+    .rule-item h3 {
+      font-size: 29px;
+      font-weight: 430;
+      line-height: 1.2;
+    }
+
+    .rule-item p {
+      margin-top: 10px;
+      font-size: 17px;
+      line-height: 1.58;
+      color: var(--muted);
+    }
+
+    #nav {
+      position: fixed;
+      left: 50%;
+      bottom: 2.2vh;
+      z-index: 8;
+      display: flex;
+      gap: 10px;
+      transform: translateX(-50%);
+    }
+
+    #nav button {
+      width: 9px;
+      height: 9px;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: rgba(10, 10, 10, 0.3);
+      cursor: pointer;
+    }
+
+    #nav button.active {
+      width: 28px;
+      background: var(--accent);
+    }
+
+    .accent ~ #nav button,
+    body.on-accent #nav button {
+      background: rgba(255, 255, 255, 0.38);
+    }
+
+    body.on-accent #nav button.active {
+      background: #ffffff;
+    }
+
+    #hint {
+      position: fixed;
+      right: 2.6vw;
+      bottom: 2.1vh;
+      z-index: 8;
+      color: rgba(10, 10, 10, 0.44);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+
+    body.on-accent #hint {
+      color: rgba(255, 255, 255, 0.56);
+    }
+
+    #overview {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      padding: 6vh 5vw;
+      background: rgba(247, 247, 244, 0.96);
+    }
+
+    body.overview #overview {
+      display: grid;
+    }
+
+    .thumb {
+      border: 1px solid var(--line);
+      background: #ffffff;
+      padding: 28px;
+      cursor: pointer;
+    }
+
+    .thumb strong {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 26px;
+      font-weight: 430;
+    }
+
+    .thumb span {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      .slide,
+      .half {
+        padding-left: 24px;
+        padding-right: 24px;
+      }
+
+      .hero-title {
+        font-size: 64px;
+      }
+
+      .hero-copy,
+      .work-stack,
+      .slide.split {
+        grid-template-columns: 1fr;
+      }
+
+      .page-title h2 {
+        font-size: 48px;
+      }
+
+      .work-stack {
+        gap: 12px;
+        margin-top: 28px;
+        min-height: auto;
+      }
+
+      .block {
+        padding: 20px;
+      }
+
+      .symbol {
+        margin: 18px 0 14px;
+      }
+
+      .slide.split {
+        overflow-y: auto;
+      }
+
+      .half {
+        height: auto;
+        min-height: 50vh;
+      }
+
+      .manifesto .word {
+        font-size: 58px;
+      }
+
+      .rule-item {
+        grid-template-columns: 58px 1fr;
+      }
+
+      #overview {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="deck">
+    <section class="slide accent" data-layout="SWISS-COVER-ASCII" aria-label="Codex 封面">
+      <div class="hero-grid">
+        <header class="chrome">
+          <div>Codex Primer · OpenAI Coding Agent</div>
+          <div>CN · 2026.06.13 · 01 / 03</div>
+        </header>
+
+        <h1 class="hero-title">Codex<br><em>会协作的</em>工程同事</h1>
+
+        <div class="hero-copy">
+          <p class="lead">一个面向软件开发的 AI coding agent：读代码库、改代码、跑验证、做审查，把想法推进到可检查的结果。</p>
+          <div class="meta">Write · Understand · Review · Debug</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-layout="S17" aria-label="Codex 工作流">
+      <header class="chrome">
+        <div>What Codex Does · Workflow Stack</div>
+        <div>02 / 03</div>
+      </header>
+
+      <div class="page-title" style="margin-top: 46px;">
+        <div class="meta">From prompt to verified change</div>
+        <h2>它不是聊天框，<br>是工作流。</h2>
+      </div>
+
+      <div class="work-stack">
+        <article class="block">
+          <div class="number">Layer 01</div>
+          <div>
+            <div class="symbol">[]</div>
+            <h3>理解上下文</h3>
+            <p>读取仓库结构、文档、测试和已有风格；先知道系统怎么运转，再决定怎么动手。</p>
+          </div>
+          <div class="meta">Repo · Docs · Tests</div>
+        </article>
+
+        <article class="block accent">
+          <div class="number">Layer 02</div>
+          <div>
+            <div class="symbol">&lt;/&gt;</div>
+            <h3>生成可审查改动</h3>
+            <p>按目标改代码、补边界、保持最小范围；结果以 diff、文件和说明交付。</p>
+          </div>
+          <div class="meta" style="color: rgba(255,255,255,0.7);">Patch · Review · Iterate</div>
+        </article>
+
+        <article class="block ink">
+          <div class="number">Layer 03</div>
+          <div>
+            <div class="symbol">✓</div>
+            <h3>运行验证闭环</h3>
+            <p>执行测试、lint、构建或浏览器检查；把“看起来对”推进到“证据支持”。</p>
+          </div>
+          <div class="meta" style="color: rgba(255,255,255,0.7);">Test · Build · Screenshot</div>
+        </article>
+      </div>
+
+      <footer class="page-foot">
+        <span>Codex works best around concrete goals and real project context.</span>
+        <span>IKB · Swiss system</span>
+      </footer>
+    </section>
+
+    <section class="slide split" data-layout="SWISS-CLOSING-ASCII" aria-label="Codex 协作方式">
+      <div class="half accent">
+        <header class="chrome">
+          <div>03 / 03</div>
+          <div>Collaboration</div>
+        </header>
+
+        <div class="manifesto">
+          <div class="meta">Working mode</div>
+          <div class="word">Ask</div>
+          <div class="word"><em>Verify</em></div>
+          <p>把意图说清楚，让它读现场；把结果跑起来，让证据说话。</p>
+        </div>
+
+        <footer class="footer meta">Codex as collaborator · 2026</footer>
+      </div>
+
+      <div class="half">
+        <header class="chrome">
+          <div>Best Use</div>
+          <div>03 Rules</div>
+        </header>
+
+        <ol class="rules">
+          <li class="rule-item">
+            <div class="rule-index">01</div>
+            <div>
+              <h3>给目标，不只给步骤</h3>
+              <p>说清楚要达成什么、约束是什么、验收标准是什么。</p>
+            </div>
+          </li>
+          <li class="rule-item">
+            <div class="rule-index">02</div>
+            <div>
+              <h3>让它先读现场</h3>
+              <p>仓库规范、测试命令、设计约束和历史决策，比一句“帮我改”更有用。</p>
+            </div>
+          </li>
+          <li class="rule-item">
+            <div class="rule-index">03</div>
+            <div>
+              <h3>用验证收尾</h3>
+              <p>测试结果、截图、构建日志和代码审查，是协作真正闭环的地方。</p>
+            </div>
+          </li>
+        </ol>
+
+        <footer class="meta" style="text-align: right;">End · Open the HTML and present</footer>
+      </div>
+    </section>
+  </main>
+
+  <nav id="nav" aria-label="幻灯片导航"></nav>
+  <div id="hint">← → 翻页 · ESC 索引</div>
+
+  <div id="overview" aria-hidden="true">
+    <button class="thumb" type="button" data-target="0"><strong>01 · Codex</strong><span>会协作的工程同事</span></button>
+    <button class="thumb" type="button" data-target="1"><strong>02 · Workflow</strong><span>从提示到可验证改动</span></button>
+    <button class="thumb" type="button" data-target="2"><strong>03 · Collaboration</strong><span>Ask / Verify</span></button>
+  </div>
+
+  <script>
+    const deck = document.querySelector("#deck");
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const nav = document.querySelector("#nav");
+    const overview = document.querySelector("#overview");
+    let index = 0;
+    let wheelLock = false;
+    let touchStartX = 0;
+
+    function go(next) {
+      index = Math.max(0, Math.min(slides.length - 1, next));
+      deck.style.transform = `translateX(${-index * 100}vw)`;
+      document.body.classList.toggle("on-accent", slides[index].classList.contains("accent"));
+      Array.from(nav.children).forEach((dot, i) => {
+        dot.classList.toggle("active", i === index);
+        dot.setAttribute("aria-current", i === index ? "page" : "false");
+      });
+    }
+
+    slides.forEach((_, i) => {
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.setAttribute("aria-label", `跳到第 ${i + 1} 页`);
+      dot.addEventListener("click", () => go(i));
+      nav.appendChild(dot);
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        document.body.classList.toggle("overview");
+        overview.setAttribute("aria-hidden", document.body.classList.contains("overview") ? "false" : "true");
+        return;
+      }
+      if (document.body.classList.contains("overview") && event.key !== "Escape") return;
+      if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") go(index + 1);
+      if (event.key === "ArrowLeft" || event.key === "PageUp") go(index - 1);
+      if (event.key === "Home") go(0);
+      if (event.key === "End") go(slides.length - 1);
+    });
+
+    document.addEventListener("wheel", (event) => {
+      if (wheelLock || Math.abs(event.deltaY) < 18) return;
+      wheelLock = true;
+      go(index + (event.deltaY > 0 ? 1 : -1));
+      window.setTimeout(() => { wheelLock = false; }, 680);
+    }, { passive: true });
+
+    document.addEventListener("touchstart", (event) => {
+      touchStartX = event.touches[0].clientX;
+    }, { passive: true });
+
+    document.addEventListener("touchend", (event) => {
+      const dx = event.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 42) go(index + (dx < 0 ? 1 : -1));
+    }, { passive: true });
+
+    overview.addEventListener("click", (event) => {
+      const target = event.target.closest("[data-target]");
+      if (!target) return;
+      document.body.classList.remove("overview");
+      overview.setAttribute("aria-hidden", "true");
+      go(Number(target.dataset.target));
+    });
+
+    go(0);
+  </script>
+</body>
+</html>

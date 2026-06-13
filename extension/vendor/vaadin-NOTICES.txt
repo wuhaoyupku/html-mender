@@ -1,0 +1,23 @@
+Vaadin UI kit vendor notices
+
+This bundle is generated from npm packages used by @vaadin/combo-box.
+Keep package-lock.json and this notice file in sync by running npm run build:ui-kit.
+
+- @lit-labs/ssr-dom-shim@1.6.0: BSD-3-Clause
+- @lit/reactive-element@2.1.2: BSD-3-Clause
+- @open-wc/dedupe-mixin@1.4.0: MIT
+- @polymer/polymer@3.5.2: BSD-3-Clause
+- @vaadin/a11y-base@24.9.16: Apache-2.0
+- @vaadin/combo-box@24.9.16: Apache-2.0
+- @vaadin/component-base@24.9.16: Apache-2.0
+- @vaadin/field-base@24.9.16: Apache-2.0
+- @vaadin/input-container@24.9.16: Apache-2.0
+- @vaadin/item@24.9.16: Apache-2.0
+- @vaadin/lit-renderer@24.9.16: Apache-2.0
+- @vaadin/overlay@24.9.16: Apache-2.0
+- @vaadin/vaadin-lumo-styles@24.9.16: Apache-2.0
+- @vaadin/vaadin-material-styles@24.9.16: Apache-2.0
+- @vaadin/vaadin-themable-mixin@24.9.16: Apache-2.0
+- lit@3.3.3: BSD-3-Clause
+- lit-element@4.2.2: BSD-3-Clause
+- lit-html@3.3.3: BSD-3-Clause
