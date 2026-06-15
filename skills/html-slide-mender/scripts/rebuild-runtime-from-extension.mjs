@@ -24,7 +24,9 @@ for (const file of CONTENT_SCRIPT_FILES) {
 parts.push(skillAutoStart());
 
 await mkdir(dirname(outputPath), { recursive: true });
-await writeFile(outputPath, parts.join("\n"), "utf8");
+const runtime = parts.join("\n");
+validateSkillRuntime(runtime);
+await writeFile(outputPath, runtime, "utf8");
 console.log(`Built ${outputPath} from ${CONTENT_SCRIPT_FILES.length} content-script files.`);
 
 function banner() {
@@ -69,9 +71,9 @@ function stripNetworkBundlingForSkill(source) {
     source,
     /async serializeCleanHtml\(mode = "basic"\) \{[\s\S]*?\n    \},\n\nserializeSourceBasedHtml/,
     `async serializeCleanHtml(_mode = "basic") {
-      const skillSourceHtml = window.__HTML_SLIDE_MENDER_SKILL_SOURCE_HTML;
-      if (typeof skillSourceHtml === "string" && skillSourceHtml.trim()) {
-        return this.serializeSourceBasedHtml(skillSourceHtml);
+      const sourceHtmlForExport = typeof skillSourceHtml === "string" ? skillSourceHtml : "";
+      if (sourceHtmlForExport.trim()) {
+        return this.serializeSourceBasedHtml(sourceHtmlForExport);
       }
 
       const clone = document.documentElement.cloneNode(true);
@@ -106,6 +108,49 @@ serializeSourceBasedHtml`,
   );
 
   return next;
+}
+
+function validateSkillRuntime(runtime) {
+  const sourceGlobalName = ["__HTML", "SLIDE", "MENDER", "SKILL", "SOURCE", "HTML"].join("_");
+  const optionsGlobalName = ["__HTML", "SLIDE", "MENDER", "SKILL", "OPTIONS"].join("_");
+  const saveDraftGlobalName = ["__HTML", "SLIDE", "MENDER", "SKILL", "SAVE", "DRAFT__"].join("_");
+  const clearDraftGlobalName = ["__HTML", "SLIDE", "MENDER", "SKILL", "CLEAR", "DRAFT__"].join("_");
+  const networkHelperNames = [
+    ["collect", "Export", "Style", "Entries"].join(""),
+    ["bundle", "Export", "Resources"].join(""),
+    ["fetch", "Stylesheet", "Text"].join(""),
+    ["resource", "As", "Data", "Url"].join("")
+  ];
+  const forbiddenPatterns = [
+    {
+      pattern: new RegExp(sourceGlobalName),
+      message: "Skill runtime must not expose source HTML through a window global."
+    },
+    {
+      pattern: new RegExp(optionsGlobalName),
+      message: "Skill runtime must not expose skill options through a window global."
+    },
+    {
+      pattern: new RegExp(`${saveDraftGlobalName}|${clearDraftGlobalName}`),
+      message: "Skill runtime must not expose skill draft helpers through window globals."
+    },
+    {
+      pattern: /credentials\s*:\s*["']include["']/,
+      message: "Skill runtime must not fetch network resources with browser credentials."
+    },
+    {
+      pattern: new RegExp(`\\b(?:${networkHelperNames.join("|")})\\b`),
+      message: "Skill runtime must stay basic-only and exclude network-backed resource bundling helpers."
+    }
+  ];
+
+  const failures = forbiddenPatterns
+    .filter(({ pattern }) => pattern.test(runtime))
+    .map(({ message }) => message);
+
+  if (failures.length) {
+    throw new Error(`Generated skill runtime failed safety validation:\n- ${failures.join("\n- ")}`);
+  }
 }
 
 function removeBetweenRequired(source, startText, endText, replacement, label) {
@@ -279,41 +324,8 @@ function skillAutoStart() {
 (() => {
   const MESSAGE_NAMESPACE = "HTML_SLIDE_MENDER";
 
-  function draftKey() {
-    const options = window.__HTML_SLIDE_MENDER_SKILL_OPTIONS || {};
-    return "htmlSlideMenderSkillDraft:" + (options.draftKey || location.href.split("#")[0]);
-  }
-
-  window.__HTML_SLIDE_MENDER_SKILL_SAVE_DRAFT__ = async (draft = {}) => {
-    const savedAt = new Date().toISOString();
-    try {
-      localStorage.setItem(draftKey(), JSON.stringify({
-        patches: Array.isArray(draft.patches) ? draft.patches : [],
-        title: String(draft.title || document.title || ""),
-        url: String(draft.url || location.href),
-        savedAt,
-        version: Number(draft.version || 2)
-      }));
-      return { ok: true, savedAt };
-    } catch (error) {
-      return {
-        ok: false,
-        error: "Draft is too large for browser local storage. Please download HTML instead."
-      };
-    }
-  };
-
-  window.__HTML_SLIDE_MENDER_SKILL_CLEAR_DRAFT__ = async () => {
-    try {
-      localStorage.removeItem(draftKey());
-      return { ok: true };
-    } catch (error) {
-      return { ok: false, error: error?.message || String(error) };
-    }
-  };
-
   async function startSkillEditor() {
-    const options = window.__HTML_SLIDE_MENDER_SKILL_OPTIONS || {};
+    const options = typeof skillOptions === "object" && skillOptions ? skillOptions : {};
     if (options.autoStart === false) {
       return;
     }

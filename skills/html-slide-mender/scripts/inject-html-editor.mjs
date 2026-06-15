@@ -33,9 +33,6 @@ async function main() {
   const sourceHtml = await readFile(inputPath, "utf8");
   const runtime = await readFile(runtimePath, "utf8");
   const cleanedHtml = stripPreviousInjection(sourceHtml);
-  const cspResult = args.stripCsp
-    ? removeMetaCsp(cleanedHtml)
-    : { html: cleanedHtml, removed: 0 };
   const options = {
     lang: args.lang || "zh-CN",
     exportMode: args.mode || "basic",
@@ -43,8 +40,8 @@ async function main() {
     enableDraft: false
   };
   const editableHtml = injectBeforeBodyEnd(
-    cspResult.html,
-    buildBodyInjection(runtime, options, cspResult.html)
+    cleanedHtml,
+    buildBodyInjection(runtime, options, cleanedHtml)
   );
 
   await writeFile(outputPath, editableHtml, "utf8");
@@ -56,8 +53,8 @@ async function main() {
     lang: args.lang || "zh-CN",
     exportMode: args.mode || "basic",
     autoStart: args.autoStart,
-    cspMetaRemoved: cspResult.removed,
-    cspMetaPreserved: !args.stripCsp,
+    cspMetaPreserved: true,
+    cspMetaModified: false,
     note: "Open the output HTML in a browser, edit visually, then use the editor toolbar to download a clean HTML copy."
   }, null, 2));
 }
@@ -69,7 +66,6 @@ function parseArgs(argv) {
     lang: "zh-CN",
     mode: "basic",
     autoStart: true,
-    stripCsp: false,
     help: false
   };
 
@@ -88,10 +84,6 @@ function parseArgs(argv) {
       index += 1;
     } else if (arg === "--no-autostart") {
       args.autoStart = false;
-    } else if (arg === "--strip-csp") {
-      args.stripCsp = true;
-    } else if (arg === "--preserve-csp") {
-      args.stripCsp = false;
     } else if (arg.startsWith("--")) {
       throw new Error(`Unknown option: ${arg}`);
     } else if (!args.input) {
@@ -136,32 +128,29 @@ function stripPreviousInjection(html) {
     .replace(/<script\b(?=[^>]*\bdata-hsm-editor\b)[\s\S]*?<\/script\s*>/gi, "");
 }
 
-function removeMetaCsp(html) {
-  let removed = 0;
-  const next = String(html || "").replace(
-    /<meta\b(?=[^>]*http-equiv\s*=\s*(?:"content-security-policy"|'content-security-policy'|content-security-policy))[^>]*>/gi,
-    () => {
-      removed += 1;
-      return "";
-    }
-  );
-  return { html: next, removed };
-}
-
 function buildBodyInjection(runtime, options, sourceHtml) {
-  const optionsJson = JSON.stringify(options).replace(/</g, "\\u003c");
-  const sourceJson = JSON.stringify(String(sourceHtml || "")).replace(/</g, "\\u003c");
+  const optionsJson = jsonForInlineScript(options);
+  const sourceJson = jsonForInlineScript(String(sourceHtml || ""));
   return [
     START_MARKER,
-    `<script data-hsm-editor="skill-source">window.__HTML_SLIDE_MENDER_SKILL_SOURCE_HTML=${sourceJson};</script>`,
-    `<script data-hsm-editor="skill-options">window.__HTML_SLIDE_MENDER_SKILL_OPTIONS=${optionsJson};</script>`,
-    `<script data-hsm-editor="skill-runtime">\n${escapeScript(runtime)}\n</script>`,
+    `<script data-hsm-editor="skill-runtime">\n(() => {\n  const skillSourceHtml = ${sourceJson};\n  const skillOptions = ${optionsJson};\n${indentRuntime(escapeScript(runtime))}\n})();\n</script>`,
     END_MARKER
   ].join("\n");
 }
 
 function escapeScript(source) {
   return String(source || "").replace(/<\/script/gi, "<\\/script");
+}
+
+function jsonForInlineScript(value) {
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
+function indentRuntime(source) {
+  return String(source || "").split("\n").map((line) => `  ${line}`).join("\n");
 }
 
 function injectBeforeBodyEnd(html, injection) {
@@ -184,7 +173,5 @@ Options:
   --lang <value>     Editor language: zh-CN or en. Defaults to zh-CN.
   --mode <value>     Export mode. Only basic is supported by the skill runtime.
   --no-autostart     Inject the runtime but do not start editing automatically.
-  --strip-csp        Remove meta Content-Security-Policy tags if they block the editor.
-  --preserve-csp     Legacy no-op; CSP meta tags are preserved by default.
 `);
 }

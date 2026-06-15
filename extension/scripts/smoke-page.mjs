@@ -60,13 +60,7 @@ try {
     }
   });
 
-  await page.addInitScript((sourceHtml) => {
-    window.__HTML_SLIDE_MENDER_SKILL_SOURCE_HTML = sourceHtml;
-    window.__HTML_SLIDE_MENDER_SKILL_OPTIONS = {
-      lang: "zh-CN",
-      exportMode: "basic",
-      autoStart: false
-    };
+  await page.addInitScript(() => {
     window.__hsmRuntimeMessages = [];
     window.chrome = {
       storage: {
@@ -101,9 +95,15 @@ try {
         }
       }
     };
-  }, sampleSourceHtml);
+  });
 
   await page.goto(sampleUrl);
+  await page.addScriptTag({
+    content: [
+      `const skillSourceHtml = ${jsonForInlineScript(sampleSourceHtml)};`,
+      "const skillOptions = { lang: \"zh-CN\", exportMode: \"basic\", autoStart: false };"
+    ].join("\n")
+  });
   await page.evaluate(() => {
     const startupGate = document.createElement("style");
     startupGate.dataset.test = "startup-scan-gate";
@@ -1039,14 +1039,7 @@ try {
     throw new Error(`Image zoom was not applied: ${imageZoom}`);
   }
 
-  const replacePoint = await page.evaluate(() => {
-    const root = document.querySelector("#html-slide-mender-root");
-    const rect = root.shadowRoot.querySelector("[data-action='image-replace']").getBoundingClientRect();
-    return {
-      x: rect.left + rect.width / 2,
-      y: rect.top + rect.height / 2
-    };
-  });
+  const replacePoint = await imageReplaceButtonPoint(page);
 
   const replacementPng = Buffer.from(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p94AAAAASUVORK5CYII=",
@@ -1125,14 +1118,7 @@ try {
     };
   });
 
-  const looseReplacePoint = await page.evaluate(() => {
-    const root = document.querySelector("#html-slide-mender-root");
-    const rect = root.shadowRoot.querySelector("[data-action='image-replace']").getBoundingClientRect();
-    return {
-      x: rect.left + rect.width / 2,
-      y: rect.top + rect.height / 2
-    };
-  });
+  const looseReplacePoint = await imageReplaceButtonPoint(page);
 
   const looseFileChooserPromise = page.waitForEvent("filechooser");
   await page.mouse.click(looseReplacePoint.x, looseReplacePoint.y);
@@ -1367,4 +1353,39 @@ function contentType(filePath) {
     default:
       return "application/octet-stream";
   }
+}
+
+async function imageReplaceButtonPoint(page) {
+  await page.waitForFunction(() => {
+    const root = document.querySelector("#html-slide-mender-root");
+    const shadow = root?.shadowRoot;
+    const popover = shadow?.querySelector("[data-role='edit-popover']");
+    const button = shadow?.querySelector("[data-action='image-replace']");
+    const rect = button?.getBoundingClientRect();
+    return Boolean(
+      popover &&
+      button &&
+      !popover.hidden &&
+      popover.dataset.selection === "image" &&
+      rect &&
+      rect.width > 0 &&
+      rect.height > 0
+    );
+  });
+
+  return page.evaluate(() => {
+    const root = document.querySelector("#html-slide-mender-root");
+    const rect = root.shadowRoot.querySelector("[data-action='image-replace']").getBoundingClientRect();
+    return {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2
+    };
+  });
+}
+
+function jsonForInlineScript(value) {
+  return JSON.stringify(String(value || ""))
+    .replace(/</g, "\\u003c")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
 }

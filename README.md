@@ -4,11 +4,19 @@ HTML Slide Mender 让 **HTML PPT / AI 生成的网页演示稿** 可以像普通
 
 你可以直接在浏览器里改文字、换图片、调整样式，然后下载一份干净的 HTML。它特别适合 AI 生成 HTML PPT 之后的最后一轮人工微调：改错别字、换标题、替换配图、统一字号颜色，而不用重新提示模型生成，也不用手写 HTML/CSS。
 
+它对 **一个网页里包含多页 PPT** 的动态页面有更好的支持：导出时会把文字、图片、背景图等内容层修改应用回原始 HTML 底稿，尽量保留原来的脚本、样式、翻页逻辑和页面结构。
+
 ## 为什么需要它
 
 - 大模型已经把 HTML PPT 做好了，只是一个标题、一个数字、一个错别字要改；但你不得不重新描述问题、等模型改、再检查一遍，还继续花 token 和钱。
 - 你把做好的 HTML PPT 发给老板或客户，对方只想顺手改两句话；但他没有大模型工具，也不会改 HTML，只能把意见发回给你。
 - 页面设计、动画和翻页都已经满意了，你只想改内容；但重新生成很容易把原来满意的地方也改坏。
+
+## 支持动态 HTML PPT
+
+很多 AI 生成的 HTML PPT 不是一页一个文件，而是一个网页里包含多页幻灯片，并通过 JavaScript 控制翻页、导航点、动画和当前页状态。
+
+HTML Slide Mender 的 skill 导出采用内容层 patch：从原始 HTML 出发，只把用户改过的文字、图片和背景图写回去。它更适合动态 HTML PPT、横向翻页 deck、AI 生成的一页多屏演示稿，以及依赖脚本初始化导航/动画的网页幻灯片。
 
 ## 用大模型安装技能
 
@@ -134,11 +142,19 @@ HTML Slide Mender helps you visually edit **HTML slide decks and AI-generated pr
 
 You can edit text, replace images, adjust simple styles, and download a clean HTML file from the browser. It is designed for the last editing pass after an AI has generated an HTML deck: fixing copy, changing titles, replacing visuals, and polishing typography without rewriting HTML/CSS or regenerating the whole deck.
 
+It is designed to work well with **one-page web slide decks** and dynamic HTML presentations. On export, it applies text, image, and background-image edits back to the original HTML source, preserving the deck's scripts, styles, navigation logic, and page structure as much as possible.
+
 ## Why This Exists
 
 - The AI already made the HTML deck, and all you need is to fix one title, one number, or one typo; instead you have to prompt again, wait again, review again, and spend more tokens.
 - You send the finished HTML deck to your boss or client, and they only want to tweak two sentences; but they do not have your AI tool, and they definitely do not want to edit HTML.
 - The layout, animation, and slide navigation are already right, and you only want content edits; regenerating the deck risks breaking the parts you already liked.
+
+## Support For Dynamic HTML Decks
+
+Many AI-generated HTML presentations are not separate files per slide. They are one-page web slide decks where JavaScript controls slide navigation, generated dots, animation, and current-slide state.
+
+HTML Slide Mender's skill export uses content-layer patching. It starts from the original HTML source and writes back only the text, image, and background-image edits made by the user. This makes it a better fit for dynamic HTML PPTs, horizontal slide decks, AI-generated one-page presentations, and slide pages that initialize navigation or animation through JavaScript.
 
 ## Install The LLM Skill
 

@@ -73,9 +73,9 @@ async download(options = {}) {
 
 async serializeCleanHtml(mode = "basic") {
       const exportMode = this.normalizeExportMode?.(mode) || "basic";
-      const skillSourceHtml = window.__HTML_SLIDE_MENDER_SKILL_SOURCE_HTML;
-      if (exportMode === "basic" && typeof skillSourceHtml === "string" && skillSourceHtml.trim()) {
-        return this.serializeSourceBasedHtml(skillSourceHtml);
+      const sourceHtmlForExport = typeof skillSourceHtml === "string" ? skillSourceHtml : "";
+      if (exportMode === "basic" && sourceHtmlForExport.trim()) {
+        return this.serializeSourceBasedHtml(sourceHtmlForExport);
       }
 
       const styleEntries = exportMode === "full"

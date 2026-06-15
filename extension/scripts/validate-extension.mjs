@@ -53,6 +53,30 @@ if (/credentials\s*:\s*["']include["']/.test(exporterJs)) {
   errors.push("Full HTML export must not fetch external resources with browser credentials.");
 }
 
+const skillRoot = new URL("../skills/html-slide-mender/", root);
+const skillSafetyFiles = [
+  "SKILL.md",
+  "scripts/inject-html-editor.mjs",
+  "scripts/rebuild-runtime-from-extension.mjs",
+  "assets/html-slide-mender-runtime.js"
+];
+
+for (const file of skillSafetyFiles) {
+  const source = await readFile(new URL(file, skillRoot), "utf8");
+  if (/__HTML_SLIDE_MENDER_SKILL_(?:SOURCE_HTML|OPTIONS|SAVE_DRAFT__|CLEAR_DRAFT__)/.test(source)) {
+    errors.push(`Skill file must not expose source HTML, options, or draft helpers through window globals: ${file}`);
+  }
+  if (/\bremoveMetaCsp\b|\bstripCsp\b|--strip-csp|--preserve-csp/.test(source)) {
+    errors.push(`Skill file must not include CSP-stripping behavior: ${file}`);
+  }
+  if (/credentials\s*:\s*["']include["']/.test(source)) {
+    errors.push(`Skill file must not fetch network resources with browser credentials: ${file}`);
+  }
+  if (/\bcollectExportStyleEntries\b|\bbundleExportResources\b|\bfetchStylesheetText\b|\bresourceAsDataUrl\b/.test(source)) {
+    errors.push(`Skill file must not include full-export network resource bundling helpers: ${file}`);
+  }
+}
+
 if (errors.length) {
   console.error(errors.map((error) => `- ${error}`).join("\n"));
   process.exit(1);

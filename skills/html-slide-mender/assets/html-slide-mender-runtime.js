@@ -4391,9 +4391,9 @@ async download(options = {}) {
     },
 
 async serializeCleanHtml(_mode = "basic") {
-      const skillSourceHtml = window.__HTML_SLIDE_MENDER_SKILL_SOURCE_HTML;
-      if (typeof skillSourceHtml === "string" && skillSourceHtml.trim()) {
-        return this.serializeSourceBasedHtml(skillSourceHtml);
+      const sourceHtmlForExport = typeof skillSourceHtml === "string" ? skillSourceHtml : "";
+      if (sourceHtmlForExport.trim()) {
+        return this.serializeSourceBasedHtml(sourceHtmlForExport);
       }
 
       const clone = document.documentElement.cloneNode(true);
@@ -4704,7 +4704,8 @@ fallbackDownload(html, filename) {
 
   ns.mixins.draft = {
 isDraftEnabled() {
-      return Boolean(window.__HTML_SLIDE_MENDER_SKILL_OPTIONS?.enableDraft);
+      const options = typeof skillOptions === "object" && skillOptions ? skillOptions : {};
+      return Boolean(options.enableDraft);
     },
 
 async saveDraft() {
@@ -4718,7 +4719,7 @@ async saveDraft() {
 
       this.commitActiveText();
       const draft = this.serializeEditableDraft();
-      const save = window.__HTML_SLIDE_MENDER_SKILL_SAVE_DRAFT__;
+      const save = typeof skillSaveDraft === "function" ? skillSaveDraft : null;
       if (typeof save !== "function") {
         this.toast(this.t("draftSaveFailed"));
         return { ok: false, error: "Draft storage is unavailable." };
@@ -4946,41 +4947,8 @@ escapeDraftCss(value) {
 (() => {
   const MESSAGE_NAMESPACE = "HTML_SLIDE_MENDER";
 
-  function draftKey() {
-    const options = window.__HTML_SLIDE_MENDER_SKILL_OPTIONS || {};
-    return "htmlSlideMenderSkillDraft:" + (options.draftKey || location.href.split("#")[0]);
-  }
-
-  window.__HTML_SLIDE_MENDER_SKILL_SAVE_DRAFT__ = async (draft = {}) => {
-    const savedAt = new Date().toISOString();
-    try {
-      localStorage.setItem(draftKey(), JSON.stringify({
-        patches: Array.isArray(draft.patches) ? draft.patches : [],
-        title: String(draft.title || document.title || ""),
-        url: String(draft.url || location.href),
-        savedAt,
-        version: Number(draft.version || 2)
-      }));
-      return { ok: true, savedAt };
-    } catch (error) {
-      return {
-        ok: false,
-        error: "Draft is too large for browser local storage. Please download HTML instead."
-      };
-    }
-  };
-
-  window.__HTML_SLIDE_MENDER_SKILL_CLEAR_DRAFT__ = async () => {
-    try {
-      localStorage.removeItem(draftKey());
-      return { ok: true };
-    } catch (error) {
-      return { ok: false, error: error?.message || String(error) };
-    }
-  };
-
   async function startSkillEditor() {
-    const options = window.__HTML_SLIDE_MENDER_SKILL_OPTIONS || {};
+    const options = typeof skillOptions === "object" && skillOptions ? skillOptions : {};
     if (options.autoStart === false) {
       return;
     }

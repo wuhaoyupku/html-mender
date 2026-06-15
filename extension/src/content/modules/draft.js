@@ -5,7 +5,8 @@
 
   ns.mixins.draft = {
 isDraftEnabled() {
-      return Boolean(window.__HTML_SLIDE_MENDER_SKILL_OPTIONS?.enableDraft);
+      const options = typeof skillOptions === "object" && skillOptions ? skillOptions : {};
+      return Boolean(options.enableDraft);
     },
 
 async saveDraft() {
@@ -19,7 +20,7 @@ async saveDraft() {
 
       this.commitActiveText();
       const draft = this.serializeEditableDraft();
-      const save = window.__HTML_SLIDE_MENDER_SKILL_SAVE_DRAFT__;
+      const save = typeof skillSaveDraft === "function" ? skillSaveDraft : null;
       if (typeof save !== "function") {
         this.toast(this.t("draftSaveFailed"));
         return { ok: false, error: "Draft storage is unavailable." };
