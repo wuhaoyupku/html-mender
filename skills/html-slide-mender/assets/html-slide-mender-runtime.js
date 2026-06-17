@@ -5710,15 +5710,25 @@ async serializeCleanHtml(_mode = "basic") {
     },
 
 serializeSourceBasedHtml(sourceHtml) {
-      const sourceDocument = new DOMParser().parseFromString(sourceHtml, "text/html");
+      const sourceText = String(sourceHtml || "");
+      const sourceDocument = new DOMParser().parseFromString(sourceText, "text/html");
       const patches = this.createSourceExportPatches(sourceDocument);
+      if (!patches.length) {
+        return sourceText;
+      }
+
+      const sourcePatchedHtml = this.serializeSourceStringWithPatches(sourceText, patches);
+      if (sourcePatchedHtml) {
+        return sourcePatchedHtml;
+      }
+
       for (const patch of patches) {
         this.applySourceExportPatch(sourceDocument, patch);
       }
 
       const doctype = sourceDocument.doctype
         ? `<!DOCTYPE ${sourceDocument.doctype.name}${sourceDocument.doctype.publicId ? ` PUBLIC "${sourceDocument.doctype.publicId}"` : ""}${sourceDocument.doctype.systemId ? ` "${sourceDocument.doctype.systemId}"` : ""}>`
-        : (String(sourceHtml).match(/^\s*<!doctype[^>]*>/i)?.[0] || "<!doctype html>");
+        : (sourceText.match(/^\s*<!doctype[^>]*>/i)?.[0] || "<!doctype html>");
 
       return `${doctype}\n${sourceDocument.documentElement.outerHTML}`;
     },
@@ -5766,13 +5776,20 @@ createSourceExportPatch(element, kind, sourceDocument) {
       if (!sourceElement || sourceElement.tagName !== element.tagName) {
         return null;
       }
+      const sourcePath = this.sourcePathForElement(sourceElement);
+      if (!sourcePath.length) {
+        return null;
+      }
 
       if (kind === "text") {
-        const html = element.innerHTML;
         const modified = this.isExportElementModified(element, "text");
+        if (!modified) {
+          return null;
+        }
+        const html = element.innerHTML;
         const style = element.getAttribute("style") || "";
-        const patch = { selector, kind, html };
-        if (modified && style !== (sourceElement.getAttribute("style") || "")) {
+        const patch = { selector, sourcePath, kind, html };
+        if (style !== (sourceElement.getAttribute("style") || "")) {
           patch.style = style;
         }
         if (html === sourceElement.innerHTML && patch.style === undefined) {
@@ -5787,7 +5804,7 @@ createSourceExportPatch(element, kind, sourceDocument) {
         if (!modified || style === (sourceElement.getAttribute("style") || "")) {
           return null;
         }
-        return { selector, kind, style };
+        return { selector, sourcePath, kind, style };
       }
 
       if (kind === "layout") {
@@ -5795,15 +5812,18 @@ createSourceExportPatch(element, kind, sourceDocument) {
         if (style === (sourceElement.getAttribute("style") || "")) {
           return null;
         }
-        return { selector, kind, style };
+        return { selector, sourcePath, kind, style };
       }
 
       const src = element.getAttribute("src") || "";
       const srcset = element.getAttribute("srcset") || "";
       const style = element.getAttribute("style") || "";
       const modified = this.isExportElementModified(element, "image");
-      const patch = { selector, kind, src, srcset };
-      if (modified && style !== (sourceElement.getAttribute("style") || "")) {
+      if (!modified) {
+        return null;
+      }
+      const patch = { selector, sourcePath, kind, src, srcset };
+      if (style !== (sourceElement.getAttribute("style") || "")) {
         patch.style = style;
       }
       const sourcePictureSources = Array.from(sourceElement.closest("picture")?.querySelectorAll("source") || []);
@@ -5821,6 +5841,7 @@ createSourceExportPatch(element, kind, sourceDocument) {
         media: source.getAttribute("media") || ""
       })))) {
         patch.pictureSources = pictureSources;
+        patch.pictureSourcePaths = sourcePictureSources.map((source) => this.sourcePathForElement(source));
       }
       if (
         src === (sourceElement.getAttribute("src") || "") &&
@@ -5831,6 +5852,358 @@ createSourceExportPatch(element, kind, sourceDocument) {
         return null;
       }
       return patch;
+    },
+
+sourcePathForElement(element) {
+      const path = [];
+      let current = element;
+      while (current && current.nodeType === Node.ELEMENT_NODE) {
+        const tag = current.tagName.toLowerCase();
+        let index = 1;
+        let sibling = current;
+        while ((sibling = sibling.previousElementSibling)) {
+          if (sibling.tagName === current.tagName) {
+            index += 1;
+          }
+        }
+        path.unshift({ tag, index });
+        current = current.parentElement;
+      }
+      return path;
+    },
+
+serializeSourceStringWithPatches(sourceHtml, patches) {
+      const tree = this.parseHtmlSourceForExport(sourceHtml);
+      if (!tree) {
+        return "";
+      }
+
+      const edits = [];
+      for (const patch of patches) {
+        const node = this.findSourceNodeByPath(tree, patch.sourcePath);
+        if (!node) {
+          return "";
+        }
+
+        if (patch.kind === "text") {
+          if (node.endTagStart == null) {
+            return "";
+          }
+          if (patch.style !== undefined) {
+            this.addSourceAttributeEdit(sourceHtml, edits, node, { style: patch.style });
+          }
+          edits.push({
+            start: node.startTagEnd,
+            end: node.endTagStart,
+            text: patch.html
+          });
+          continue;
+        }
+
+        if (patch.kind === "background" || patch.kind === "layout") {
+          this.addSourceAttributeEdit(sourceHtml, edits, node, { style: patch.style });
+          continue;
+        }
+
+        const attrs = {
+          src: patch.src,
+          srcset: patch.srcset
+        };
+        if (patch.style !== undefined) {
+          attrs.style = patch.style;
+        }
+        this.addSourceAttributeEdit(sourceHtml, edits, node, attrs);
+
+        if (Array.isArray(patch.pictureSources) && Array.isArray(patch.pictureSourcePaths)) {
+          for (const [index, state] of patch.pictureSources.entries()) {
+            const sourceNode = this.findSourceNodeByPath(tree, patch.pictureSourcePaths[index]);
+            if (!sourceNode) {
+              return "";
+            }
+            this.addSourceAttributeEdit(sourceHtml, edits, sourceNode, {
+              srcset: state.srcset || "",
+              sizes: state.sizes || "",
+              type: state.type || "",
+              media: state.media || ""
+            });
+          }
+        }
+      }
+
+      return this.applySourceStringEdits(sourceHtml, edits);
+    },
+
+addSourceAttributeEdit(sourceHtml, edits, node, attrs) {
+      let tag = sourceHtml.slice(node.startTagStart, node.startTagEnd);
+      for (const [name, value] of Object.entries(attrs)) {
+        tag = this.setSourceTagAttribute(tag, name, value);
+      }
+      edits.push({
+        start: node.startTagStart,
+        end: node.startTagEnd,
+        text: tag
+      });
+    },
+
+applySourceStringEdits(sourceHtml, edits) {
+      let result = sourceHtml;
+      let nextStart = sourceHtml.length + 1;
+      const ordered = edits
+        .filter((edit) => edit && edit.start <= edit.end && edit.start >= 0 && edit.end <= sourceHtml.length)
+        .sort((a, b) => b.start - a.start);
+
+      if (ordered.length !== edits.length) {
+        return "";
+      }
+
+      for (const edit of ordered) {
+        if (edit.end > nextStart) {
+          return "";
+        }
+        result = result.slice(0, edit.start) + edit.text + result.slice(edit.end);
+        nextStart = edit.start;
+      }
+      return result;
+    },
+
+setSourceTagAttribute(startTag, name, value) {
+      const serializedValue = value == null ? "" : String(value);
+      const range = this.findSourceTagAttribute(startTag, name);
+      if (!serializedValue) {
+        if (!range) {
+          return startTag;
+        }
+        return startTag.slice(0, range.removeStart) + startTag.slice(range.end);
+      }
+
+      const attr = `${name}="${escapeAttr(serializedValue)}"`;
+      if (range) {
+        return startTag.slice(0, range.start) + attr + startTag.slice(range.end);
+      }
+
+      const insertAt = this.sourceTagAttributeInsertIndex(startTag);
+      return `${startTag.slice(0, insertAt)} ${attr}${startTag.slice(insertAt)}`;
+    },
+
+findSourceTagAttribute(startTag, name) {
+      const wanted = String(name || "").toLowerCase();
+      let index = 1;
+      while (index < startTag.length && /[^\s/>]/.test(startTag[index])) {
+        index += 1;
+      }
+
+      while (index < startTag.length) {
+        while (index < startTag.length && /\s/.test(startTag[index])) {
+          index += 1;
+        }
+        if (index >= startTag.length || startTag[index] === ">" || startTag[index] === "/") {
+          return null;
+        }
+
+        const start = index;
+        while (index < startTag.length && /[^\s=/>]/.test(startTag[index])) {
+          index += 1;
+        }
+        const attrName = startTag.slice(start, index);
+        while (index < startTag.length && /\s/.test(startTag[index])) {
+          index += 1;
+        }
+        if (startTag[index] === "=") {
+          index += 1;
+          while (index < startTag.length && /\s/.test(startTag[index])) {
+            index += 1;
+          }
+          const quote = startTag[index] === "\"" || startTag[index] === "'" ? startTag[index++] : "";
+          if (quote) {
+            while (index < startTag.length && startTag[index] !== quote) {
+              index += 1;
+            }
+            if (startTag[index] === quote) {
+              index += 1;
+            }
+          } else {
+            while (index < startTag.length && /[^\s>]/.test(startTag[index])) {
+              index += 1;
+            }
+          }
+        }
+
+        const end = index;
+        if (attrName.toLowerCase() === wanted) {
+          let removeStart = start;
+          while (removeStart > 0 && /\s/.test(startTag[removeStart - 1])) {
+            removeStart -= 1;
+          }
+          return { start, end, removeStart };
+        }
+      }
+      return null;
+    },
+
+sourceTagAttributeInsertIndex(startTag) {
+      let index = startTag.length - 1;
+      while (index > 0 && /\s/.test(startTag[index - 1])) {
+        index -= 1;
+      }
+      if (startTag[index - 1] === "/") {
+        index -= 1;
+        while (index > 0 && /\s/.test(startTag[index - 1])) {
+          index -= 1;
+        }
+      }
+      return Math.max(1, index);
+    },
+
+parseHtmlSourceForExport(sourceHtml) {
+      const source = String(sourceHtml || "");
+      const root = { tag: "#document", children: [] };
+      const stack = [root];
+      let index = 0;
+      while (index < source.length) {
+        const start = source.indexOf("<", index);
+        if (start < 0) {
+          break;
+        }
+        if (source.startsWith("<!--", start)) {
+          const end = source.indexOf("-->", start + 4);
+          index = end < 0 ? source.length : end + 3;
+          continue;
+        }
+        if (/^<!\[CDATA\[/i.test(source.slice(start, start + 10))) {
+          const end = source.indexOf("]]>", start + 9);
+          index = end < 0 ? source.length : end + 3;
+          continue;
+        }
+        if (/^<!|^<\?/i.test(source.slice(start, start + 2))) {
+          const end = this.findSourceTagEnd(source, start);
+          index = end < 0 ? source.length : end;
+          continue;
+        }
+        if (source[start + 1] === "/") {
+          const end = this.findSourceTagEnd(source, start);
+          const match = source.slice(start, end < 0 ? source.length : end).match(/^<\s*\/\s*([a-zA-Z][^\s/>]*)/);
+          if (match) {
+            const tag = match[1].toLowerCase();
+            for (let stackIndex = stack.length - 1; stackIndex > 0; stackIndex -= 1) {
+              if (stack[stackIndex].tag === tag) {
+                while (stack.length - 1 >= stackIndex) {
+                  const node = stack.pop();
+                  if (node.endTagStart == null) {
+                    node.endTagStart = start;
+                    node.endTagEnd = end;
+                  }
+                }
+                break;
+              }
+            }
+          }
+          index = end < 0 ? source.length : end;
+          continue;
+        }
+
+        const end = this.findSourceTagEnd(source, start);
+        if (end < 0) {
+          return null;
+        }
+        const tagMatch = source.slice(start, end).match(/^<\s*([a-zA-Z][^\s/>]*)/);
+        if (!tagMatch) {
+          index = end;
+          continue;
+        }
+
+        const tag = tagMatch[1].toLowerCase();
+        const parent = stack[stack.length - 1];
+        const node = {
+          tag,
+          parent,
+          children: [],
+          startTagStart: start,
+          startTagEnd: end,
+          endTagStart: null,
+          endTagEnd: null
+        };
+        parent.children.push(node);
+
+        if (this.isVoidSourceTag(tag) || /\/\s*>$/.test(source.slice(start, end))) {
+          node.endTagStart = end;
+          node.endTagEnd = end;
+          index = end;
+          continue;
+        }
+
+        if (this.isRawTextSourceTag(tag)) {
+          const close = this.findRawTextSourceClose(source, tag, end);
+          if (close) {
+            node.endTagStart = close.start;
+            node.endTagEnd = close.end;
+            index = close.end;
+          } else {
+            index = end;
+          }
+          continue;
+        }
+
+        stack.push(node);
+        index = end;
+      }
+      return root;
+    },
+
+findSourceNodeByPath(tree, path = []) {
+      let node = tree;
+      for (const segment of path) {
+        if (!node?.children) {
+          return null;
+        }
+        const matches = node.children.filter((child) => child.tag === segment.tag);
+        node = matches[(segment.index || 1) - 1];
+        if (!node) {
+          return null;
+        }
+      }
+      return node;
+    },
+
+findSourceTagEnd(source, start) {
+      let quote = "";
+      for (let index = start + 1; index < source.length; index += 1) {
+        const char = source[index];
+        if (quote) {
+          if (char === quote) {
+            quote = "";
+          }
+          continue;
+        }
+        if (char === "\"" || char === "'") {
+          quote = char;
+          continue;
+        }
+        if (char === ">") {
+          return index + 1;
+        }
+      }
+      return -1;
+    },
+
+findRawTextSourceClose(source, tag, fromIndex) {
+      const pattern = new RegExp(`</\\s*${tag}\\s*>`, "i");
+      const match = pattern.exec(source.slice(fromIndex));
+      if (!match) {
+        return null;
+      }
+      const start = fromIndex + match.index;
+      return {
+        start,
+        end: start + match[0].length
+      };
+    },
+
+isVoidSourceTag(tag) {
+      return /^(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)$/i.test(tag);
+    },
+
+isRawTextSourceTag(tag) {
+      return /^(script|style|textarea|title)$/i.test(tag);
     },
 
 applySourceExportPatch(sourceDocument, patch) {

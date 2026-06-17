@@ -123,9 +123,12 @@ function defaultOutputPath(inputPath) {
 }
 
 function stripPreviousInjection(html) {
-  return String(html || "")
-    .replace(/<!--\s*html-slide-mender-skill:(?:start|end)\s*-->/gi, "")
-    .replace(/<script\b(?=[^>]*\bdata-hsm-editor\b)[\s\S]*?<\/script\s*>/gi, "");
+  const source = String(html || "");
+  const ranges = findInjectionRemovalRanges(source);
+  if (!ranges.length) {
+    return source;
+  }
+  return applyRemovalRanges(source, ranges);
 }
 
 function buildBodyInjection(runtime, options, sourceHtml) {
@@ -155,13 +158,161 @@ function indentRuntime(source) {
 
 function injectBeforeBodyEnd(html, injection) {
   const source = String(html || "");
-  if (/<\/body\s*>/i.test(source)) {
-    return source.replace(/<\/body\s*>/i, `${injection}\n</body>`);
+  const bodyEnd = findClosingTagOutsideRawText(source, "body");
+  if (bodyEnd) {
+    return `${source.slice(0, bodyEnd.start)}${injection}\n${source.slice(bodyEnd.start)}`;
   }
-  if (/<\/html\s*>/i.test(source)) {
-    return source.replace(/<\/html\s*>/i, `${injection}\n</html>`);
+  const htmlEnd = findClosingTagOutsideRawText(source, "html");
+  if (htmlEnd) {
+    return `${source.slice(0, htmlEnd.start)}${injection}\n${source.slice(htmlEnd.start)}`;
   }
   return `${source}\n${injection}\n`;
+}
+
+function findInjectionRemovalRanges(source) {
+  const ranges = [];
+  walkHtmlTokens(source, {
+    comment(token) {
+      if (/html-slide-mender-skill:(?:start|end)/i.test(token.text)) {
+        ranges.push({ start: token.start, end: token.end });
+      }
+    },
+    startTag(token) {
+      if (token.tag === "script" && /\bdata-hsm-editor\b/i.test(token.text)) {
+        const close = findRawTextClose(source, "script", token.end);
+        ranges.push({ start: token.start, end: close?.end || token.end });
+      }
+    }
+  });
+  return ranges;
+}
+
+function applyRemovalRanges(source, ranges) {
+  let result = source;
+  let nextStart = source.length + 1;
+  const ordered = ranges
+    .filter((range) => range.start >= 0 && range.end >= range.start && range.end <= source.length)
+    .sort((a, b) => b.start - a.start);
+  for (const range of ordered) {
+    if (range.end > nextStart) {
+      continue;
+    }
+    result = result.slice(0, range.start) + result.slice(range.end);
+    nextStart = range.start;
+  }
+  return result;
+}
+
+function findClosingTagOutsideRawText(source, tagName) {
+  let found = null;
+  walkHtmlTokens(source, {
+    endTag(token) {
+      if (token.tag === tagName.toLowerCase()) {
+        found = token;
+      }
+    }
+  });
+  return found;
+}
+
+function walkHtmlTokens(source, visitor = {}) {
+  const html = String(source || "");
+  let index = 0;
+  while (index < html.length) {
+    const start = html.indexOf("<", index);
+    if (start < 0) {
+      break;
+    }
+
+    if (html.startsWith("<!--", start)) {
+      const close = html.indexOf("-->", start + 4);
+      const end = close < 0 ? html.length : close + 3;
+      visitor.comment?.({
+        start,
+        end,
+        text: html.slice(start, end)
+      });
+      index = end;
+      continue;
+    }
+
+    const tagEnd = findTagEnd(html, start);
+    if (tagEnd < 0) {
+      break;
+    }
+    const tagText = html.slice(start, tagEnd);
+    const endMatch = tagText.match(/^<\s*\/\s*([a-zA-Z][^\s/>]*)/);
+    if (endMatch) {
+      visitor.endTag?.({
+        start,
+        end: tagEnd,
+        tag: endMatch[1].toLowerCase(),
+        text: tagText
+      });
+      index = tagEnd;
+      continue;
+    }
+
+    const startMatch = tagText.match(/^<\s*([a-zA-Z][^\s/>]*)/);
+    if (!startMatch) {
+      index = tagEnd;
+      continue;
+    }
+
+    const tag = startMatch[1].toLowerCase();
+    visitor.startTag?.({
+      start,
+      end: tagEnd,
+      tag,
+      text: tagText
+    });
+
+    if (!/\/\s*>$/.test(tagText) && isRawTextTag(tag)) {
+      const close = findRawTextClose(html, tag, tagEnd);
+      index = close?.end || tagEnd;
+      continue;
+    }
+
+    index = tagEnd;
+  }
+}
+
+function findTagEnd(source, start) {
+  let quote = "";
+  for (let index = start + 1; index < source.length; index += 1) {
+    const char = source[index];
+    if (quote) {
+      if (char === quote) {
+        quote = "";
+      }
+      continue;
+    }
+    if (char === "\"" || char === "'") {
+      quote = char;
+      continue;
+    }
+    if (char === ">") {
+      return index + 1;
+    }
+  }
+  return -1;
+}
+
+function findRawTextClose(source, tag, fromIndex) {
+  const pattern = new RegExp(`</\\s*${tag}\\s*>`, "i");
+  const match = pattern.exec(source.slice(fromIndex));
+  if (!match) {
+    return null;
+  }
+  const start = fromIndex + match.index;
+  return {
+    start,
+    end: start + match[0].length
+  };
+}
+
+function isRawTextTag(tag) {
+  return /^(script|style|textarea|title)$/i.test(tag);
 }
 
 function printUsage() {

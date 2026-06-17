@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.9
+
+- Fixed local injection for complex HTML files that include embedded `</body>` strings inside JavaScript data.
+- Changed clean export to return the original source unchanged when there are no edits.
+- Limited source-based export patches to editor-modified elements and applied those patches directly to the source string before falling back to DOM serialization.
+
 ## 0.1.8
 
 - Added safe visual scaling in `Move layout` mode using `transform: scale(...)` instead of real width/height changes.

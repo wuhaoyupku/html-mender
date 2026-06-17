@@ -1,7 +1,7 @@
 ---
 name: html-slide-mender
 description: Visual editor for local or saved HTML files, especially HTML PPTs, AI-generated presentation pages, one-page web slide decks, and dynamic JavaScript slide pages. Use this skill whenever the user wants to make a local HTML editable, edit or modify an HTML PPT, fix text, replace images, adjust layout/position/size, move/scale/resize/stretch a title/image/card/block, or says phrases like “修改这个 HTML”, “HTML PPT 可编辑”, “标题往上一点”, “调整版面”, or “改宽高”. Clean export patches text/images/backgrounds/layout styles back into the original source HTML instead of saving runtime DOM. Do not use for live websites, authenticated online pages, generic source-code edits, or PPTX/PowerPoint files; ask for a saved local HTML copy first.
-version: 0.1.8
+version: 0.1.9
 metadata:
   openclaw:
     homepage: https://github.com/wuhaoyupku/html-slide-mender
@@ -60,6 +60,12 @@ node scripts/inject-html-editor.mjs <input.html> \
 - If the editable page appears unstyled, regenerate it beside the original HTML so relative paths resolve.
 
 ## Version Notes
+
+### 0.1.9
+
+- Fixes injection for complex HTML files that contain embedded `</body>` strings inside JavaScript data.
+- Keeps unchanged source HTML byte-for-byte during clean export.
+- Exports only elements that the editor actually modified, then applies source-string patches before falling back to DOM serialization.
 
 ### 0.1.8
 

@@ -172,6 +172,13 @@ try {
     throw new Error(`Unexpected editable box counts: ${JSON.stringify(boxCounts)}`);
   }
 
+  const pristineSourceExport = await page.evaluate(() => {
+    return window.__htmlSlideMenderBootstrap.editor.serializeSourceBasedHtml(skillSourceHtml);
+  });
+  if (pristineSourceExport !== sampleSourceHtml) {
+    throw new Error("Source-based export rewrote an unchanged HTML file.");
+  }
+
   for (const script of contentScriptSources) {
     await page.addScriptTag({ content: script.source });
   }
