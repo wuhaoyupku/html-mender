@@ -110,6 +110,15 @@ setEditorMode(mode) {
       this.commitActiveText?.();
       this.editMode = nextMode;
       this.closeOpenMenus?.();
+      if (nextMode === "layout" && this.selectedId) {
+        this.selectedIds?.add(this.selectedId);
+      } else if (nextMode === "content") {
+        const selectedId = this.selectedId;
+        this.selectedIds?.clear();
+        if (selectedId) {
+          this.selectedIds?.add(selectedId);
+        }
+      }
       this.scheduleScan(0);
       this.refreshToolbar?.();
       this.renderBoxes?.();
@@ -239,6 +248,88 @@ refreshLayoutToolButtons() {
       }
     },
 
+selectedLayoutItemsFor(triggerItem = null) {
+      const selected = this.selectedItems?.() || [];
+      const group = selected
+        .filter((item) => this.layoutTargetForItem(item))
+        .filter((item, index, items) => items.findIndex((candidate) => candidate.id === item.id) === index);
+      if (triggerItem && group.some((item) => item.id === triggerItem.id)) {
+        return group;
+      }
+      return triggerItem && this.layoutTargetForItem(triggerItem) ? [triggerItem] : group;
+    },
+
+prepareLayoutInteractionSelection(item) {
+      if (!item) {
+        return [];
+      }
+      if (this.isItemSelected?.(item.id) && (this.selectedIds?.size || 0) > 1) {
+        this.selectItem(item.id, { preserveGroup: true });
+      } else {
+        this.selectItem(item.id);
+      }
+      return this.selectedLayoutItemsFor(item);
+    },
+
+layoutInteractionEntries(items) {
+      return items.map((item) => {
+        const adjustment = this.layoutAdjustmentFor(item);
+        const target = adjustment?.target;
+        if (!target) {
+          return null;
+        }
+        return {
+          item,
+          adjustment,
+          target,
+          before: null,
+          startRect: target.getBoundingClientRect(),
+          originX: adjustment.x || 0,
+          originY: adjustment.y || 0,
+          originScale: adjustment.scale || 1
+        };
+      }).filter(Boolean);
+    },
+
+captureLayoutBatchBefore(entries) {
+      for (const entry of entries) {
+        this.ensureOriginalState(entry.item);
+        entry.before = this.captureState(entry.item);
+      }
+    },
+
+restoreLayoutBatch(entries) {
+      for (const entry of entries) {
+        if (entry.before) {
+          this.restoreState(entry.item, entry.before);
+          this.layoutAdjustments.delete(entry.item.id);
+        }
+      }
+      this.renderBoxes?.();
+      this.refreshToolbar?.();
+    },
+
+finishLayoutBatch(entries, label) {
+      const changes = entries
+        .filter((entry) => entry.before)
+        .map((entry) => ({
+          item: entry.item,
+          before: entry.before,
+          after: this.captureState(entry.item)
+        }))
+        .filter((entry) => !sameState(entry.before, entry.after));
+      if (!changes.length) {
+        return;
+      }
+
+      this.pushHistoryEntries?.(changes, label);
+      for (const { item } of changes) {
+        this.markLayoutModified(item);
+      }
+      this.renderBoxes?.();
+      this.refreshToolbar?.();
+    },
+
 layoutAdjustmentFor(item) {
       const target = this.layoutTargetForItem(item);
       if (!item || !target) {
@@ -328,39 +419,38 @@ applyLayoutAdjustment(item, adjustment) {
       }
     },
 
+setLayoutDragClass(entries, className, enabled) {
+      for (const entry of entries || []) {
+        const box = this.shadow?.querySelector(`[data-item-id='${CSS.escape(entry.item.id)}']`);
+        box?.classList.toggle(className, enabled);
+      }
+    },
+
 startLayoutDrag(event, item) {
       if (!item || event.button !== 0) {
         return;
       }
 
-      const adjustment = this.layoutAdjustmentFor(item);
-      const target = adjustment?.target;
-      if (!target) {
+      const items = this.prepareLayoutInteractionSelection(item);
+      const entries = this.layoutInteractionEntries(items);
+      if (!entries.length) {
         return;
       }
 
       event.preventDefault();
       event.stopPropagation();
       this.commitActiveText?.();
-      this.selectedId = item.id;
-      this.refreshToolbar?.();
       this.closeOpenMenus?.();
 
-      const startRect = target.getBoundingClientRect();
       this.layoutDrag = {
         item,
-        adjustment,
-        before: null,
+        entries,
         started: false,
         startX: event.clientX,
-        startY: event.clientY,
-        originX: adjustment.x || 0,
-        originY: adjustment.y || 0,
-        startRect
+        startY: event.clientY
       };
 
-      const box = this.shadow?.querySelector(`[data-item-id='${CSS.escape(item.id)}']`);
-      box?.classList.add("is-layout-dragging");
+      this.setLayoutDragClass(entries, "is-layout-dragging", true);
 
       const onMove = (moveEvent) => this.handleLayoutDragMove(moveEvent);
       const onUp = () => endDrag(false);
@@ -376,7 +466,7 @@ startLayoutDrag(event, item) {
         document.removeEventListener("pointermove", onMove, true);
         document.removeEventListener("pointerup", onUp, true);
         document.removeEventListener("keydown", onKey, true);
-        box?.classList.remove("is-layout-dragging");
+        this.setLayoutDragClass(entries, "is-layout-dragging", false);
 
         const drag = this.layoutDrag;
         this.layoutDrag = null;
@@ -386,20 +476,13 @@ startLayoutDrag(event, item) {
           return;
         }
 
-        if (cancelled && drag.before) {
-          this.restoreState(drag.item, drag.before);
-          this.layoutAdjustments.delete(drag.item.id);
-          this.renderBoxes?.();
-          this.refreshToolbar?.();
+        if (cancelled && drag.started) {
+          this.restoreLayoutBatch(drag.entries);
           return;
         }
 
-        const after = drag.before ? this.captureState(drag.item) : null;
-        if (drag.before && after && !sameState(drag.before, after)) {
-          this.pushHistory(drag.item, drag.before, after, "Move element");
-          this.markLayoutModified(drag.item);
-          this.renderBoxes?.();
-          this.refreshToolbar?.();
+        if (drag.started) {
+          this.finishLayoutBatch(drag.entries, drag.entries.length > 1 ? "Move elements" : "Move element");
         }
       };
 
@@ -413,37 +496,33 @@ startLayoutScale(event, item, handle) {
         return;
       }
 
-      const adjustment = this.layoutAdjustmentFor(item);
-      const target = adjustment?.target;
-      if (!target) {
+      const items = this.prepareLayoutInteractionSelection(item);
+      const entries = this.layoutInteractionEntries(items);
+      const primary = entries.find((entry) => entry.item.id === item.id) || entries[0];
+      if (!primary) {
         return;
       }
 
       event.preventDefault();
       event.stopPropagation();
       this.commitActiveText?.();
-      this.selectedId = item.id;
-      this.refreshToolbar?.();
       this.closeOpenMenus?.();
 
-      const rect = target.getBoundingClientRect();
+      const rect = primary.target.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
       const startDistance = Math.max(12, Math.hypot(event.clientX - centerX, event.clientY - centerY));
       this.layoutScaleDrag = {
         item,
-        adjustment,
+        entries,
         handle,
-        before: null,
         started: false,
         centerX,
         centerY,
-        startDistance,
-        originScale: adjustment.scale || 1
+        startDistance
       };
 
-      const box = this.shadow?.querySelector(`[data-item-id='${CSS.escape(item.id)}']`);
-      box?.classList.add("is-layout-scaling");
+      this.setLayoutDragClass(entries, "is-layout-scaling", true);
 
       const onMove = (moveEvent) => this.handleLayoutScaleMove(moveEvent);
       const onUp = () => endScale(false);
@@ -459,7 +538,7 @@ startLayoutScale(event, item, handle) {
         document.removeEventListener("pointermove", onMove, true);
         document.removeEventListener("pointerup", onUp, true);
         document.removeEventListener("keydown", onKey, true);
-        box?.classList.remove("is-layout-scaling");
+        this.setLayoutDragClass(entries, "is-layout-scaling", false);
 
         const drag = this.layoutScaleDrag;
         this.layoutScaleDrag = null;
@@ -469,20 +548,13 @@ startLayoutScale(event, item, handle) {
           return;
         }
 
-        if (cancelled && drag.before) {
-          this.restoreState(drag.item, drag.before);
-          this.layoutAdjustments.delete(drag.item.id);
-          this.renderBoxes?.();
-          this.refreshToolbar?.();
+        if (cancelled && drag.started) {
+          this.restoreLayoutBatch(drag.entries);
           return;
         }
 
-        const after = drag.before ? this.captureState(drag.item) : null;
-        if (drag.before && after && !sameState(drag.before, after)) {
-          this.pushHistory(drag.item, drag.before, after, "Scale element");
-          this.markLayoutModified(drag.item);
-          this.renderBoxes?.();
-          this.refreshToolbar?.();
+        if (drag.started) {
+          this.finishLayoutBatch(drag.entries, drag.entries.length > 1 ? "Scale elements" : "Scale element");
         }
       };
 
@@ -507,13 +579,14 @@ handleLayoutScaleMove(event) {
       event.stopImmediatePropagation();
 
       if (!drag.started) {
-        this.ensureOriginalState(drag.item);
-        drag.before = this.captureState(drag.item);
+        this.captureLayoutBatchBefore(drag.entries);
         drag.started = true;
       }
 
-      drag.adjustment.scale = clamp(drag.originScale * ratio, 0.2, 5);
-      this.applyLayoutAdjustment(drag.item, drag.adjustment);
+      for (const entry of drag.entries) {
+        entry.adjustment.scale = clamp(entry.originScale * ratio, 0.2, 5);
+        this.applyLayoutAdjustment(entry.item, entry.adjustment);
+      }
       this.renderBoxes?.();
     },
 
@@ -527,41 +600,37 @@ startLayoutResize(event, item, handle) {
         return;
       }
 
-      const adjustment = this.layoutAdjustmentFor(item);
-      const target = adjustment?.target;
-      if (!target) {
+      const items = this.prepareLayoutInteractionSelection(item);
+      const entries = this.layoutInteractionEntries(items).map((entry) => {
+        const rect = entry.target.getBoundingClientRect();
+        const style = getComputedStyle(entry.target);
+        return {
+          ...entry,
+          originWidth: Number.parseFloat(style.width) || rect.width,
+          originHeight: Number.parseFloat(style.height) || rect.height,
+          scale: clamp(entry.adjustment.scale || 1, 0.2, 5)
+        };
+      });
+      if (!entries.length) {
         return;
       }
 
       event.preventDefault();
       event.stopPropagation();
       this.commitActiveText?.();
-      this.selectedId = item.id;
-      this.refreshToolbar?.();
       this.closeOpenMenus?.();
 
-      const rect = target.getBoundingClientRect();
-      const style = getComputedStyle(target);
-      const originWidth = Number.parseFloat(style.width) || rect.width;
-      const originHeight = Number.parseFloat(style.height) || rect.height;
       this.layoutResizeDrag = {
         item,
-        adjustment,
+        entries,
         handle,
         axes,
-        before: null,
         started: false,
         startX: event.clientX,
-        startY: event.clientY,
-        originX: adjustment.x || 0,
-        originY: adjustment.y || 0,
-        originWidth,
-        originHeight,
-        scale: clamp(adjustment.scale || 1, 0.2, 5)
+        startY: event.clientY
       };
 
-      const box = this.shadow?.querySelector(`[data-item-id='${CSS.escape(item.id)}']`);
-      box?.classList.add("is-layout-resizing");
+      this.setLayoutDragClass(entries, "is-layout-resizing", true);
 
       const onMove = (moveEvent) => this.handleLayoutResizeMove(moveEvent);
       const onUp = () => endResize(false);
@@ -577,7 +646,7 @@ startLayoutResize(event, item, handle) {
         document.removeEventListener("pointermove", onMove, true);
         document.removeEventListener("pointerup", onUp, true);
         document.removeEventListener("keydown", onKey, true);
-        box?.classList.remove("is-layout-resizing");
+        this.setLayoutDragClass(entries, "is-layout-resizing", false);
 
         const drag = this.layoutResizeDrag;
         this.layoutResizeDrag = null;
@@ -587,20 +656,13 @@ startLayoutResize(event, item, handle) {
           return;
         }
 
-        if (cancelled && drag.before) {
-          this.restoreState(drag.item, drag.before);
-          this.layoutAdjustments.delete(drag.item.id);
-          this.renderBoxes?.();
-          this.refreshToolbar?.();
+        if (cancelled && drag.started) {
+          this.restoreLayoutBatch(drag.entries);
           return;
         }
 
-        const after = drag.before ? this.captureState(drag.item) : null;
-        if (drag.before && after && !sameState(drag.before, after)) {
-          this.pushHistory(drag.item, drag.before, after, "Resize element");
-          this.markLayoutModified(drag.item);
-          this.renderBoxes?.();
-          this.refreshToolbar?.();
+        if (drag.started) {
+          this.finishLayoutBatch(drag.entries, drag.entries.length > 1 ? "Resize elements" : "Resize element");
         }
       };
 
@@ -674,33 +736,36 @@ handleLayoutResizeMove(event) {
       event.stopImmediatePropagation();
 
       if (!drag.started) {
-        this.ensureOriginalState(drag.item);
-        drag.before = this.captureState(drag.item);
-        this.ensureLayoutSizeBase(drag.adjustment, drag.axes);
+        this.captureLayoutBatchBefore(drag.entries);
+        for (const entry of drag.entries) {
+          this.ensureLayoutSizeBase(entry.adjustment, drag.axes);
+        }
         drag.started = true;
       }
 
-      const deltaX = rawDeltaX / drag.scale;
-      const deltaY = rawDeltaY / drag.scale;
-      if (drag.axes.width) {
-        const rawWidth = drag.axes.x > 0 ? drag.originWidth + deltaX : drag.originWidth - deltaX;
-        const nextWidth = clamp(rawWidth, 8, 8000);
-        drag.adjustment.width = nextWidth;
-        if (drag.axes.x < 0) {
-          drag.adjustment.x = drag.originX + (drag.originWidth - nextWidth);
+      for (const entry of drag.entries) {
+        const deltaX = rawDeltaX / entry.scale;
+        const deltaY = rawDeltaY / entry.scale;
+        if (drag.axes.width) {
+          const rawWidth = drag.axes.x > 0 ? entry.originWidth + deltaX : entry.originWidth - deltaX;
+          const nextWidth = clamp(rawWidth, 8, 8000);
+          entry.adjustment.width = nextWidth;
+          if (drag.axes.x < 0) {
+            entry.adjustment.x = entry.originX + (entry.originWidth - nextWidth);
+          }
         }
-      }
-      if (drag.axes.height) {
-        const rawHeight = drag.axes.y > 0 ? drag.originHeight + deltaY : drag.originHeight - deltaY;
-        const nextHeight = clamp(rawHeight, 8, 8000);
-        drag.adjustment.height = nextHeight;
-        if (drag.axes.y < 0) {
-          drag.adjustment.y = drag.originY + (drag.originHeight - nextHeight);
+        if (drag.axes.height) {
+          const rawHeight = drag.axes.y > 0 ? entry.originHeight + deltaY : entry.originHeight - deltaY;
+          const nextHeight = clamp(rawHeight, 8, 8000);
+          entry.adjustment.height = nextHeight;
+          if (drag.axes.y < 0) {
+            entry.adjustment.y = entry.originY + (entry.originHeight - nextHeight);
+          }
         }
-      }
 
-      this.applyLayoutSizeAdjustment(drag.item, drag.adjustment);
-      this.applyLayoutAdjustment(drag.item, drag.adjustment);
+        this.applyLayoutSizeAdjustment(entry.item, entry.adjustment);
+        this.applyLayoutAdjustment(entry.item, entry.adjustment);
+      }
       this.renderBoxes?.();
     },
 
@@ -720,33 +785,47 @@ handleLayoutDragMove(event) {
       event.stopImmediatePropagation();
 
       if (!drag.started) {
-        this.ensureOriginalState(drag.item);
-        drag.before = this.captureState(drag.item);
+        this.captureLayoutBatchBefore(drag.entries);
         drag.started = true;
       }
 
-      const next = this.clampLayoutOffset(drag, drag.originX + deltaX, drag.originY + deltaY);
-      drag.adjustment.x = next.x;
-      drag.adjustment.y = next.y;
-      this.applyLayoutAdjustment(drag.item, drag.adjustment);
+      const next = this.clampLayoutGroupDelta(drag.entries, deltaX, deltaY);
+      for (const entry of drag.entries) {
+        entry.adjustment.x = entry.originX + next.x;
+        entry.adjustment.y = entry.originY + next.y;
+        this.applyLayoutAdjustment(entry.item, entry.adjustment);
+      }
       this.renderBoxes?.();
     },
 
-clampLayoutOffset(drag, x, y) {
-      const rect = drag.startRect;
-      const deltaX = x - drag.originX;
-      const deltaY = y - drag.originY;
+clampLayoutGroupDelta(entries, deltaX, deltaY) {
+      let minDeltaX = -Infinity;
+      let maxDeltaX = Infinity;
+      let minDeltaY = -Infinity;
+      let maxDeltaY = Infinity;
+      for (const entry of entries) {
+        const bounds = this.layoutDeltaBounds(entry.startRect);
+        minDeltaX = Math.max(minDeltaX, bounds.minDeltaX);
+        maxDeltaX = Math.min(maxDeltaX, bounds.maxDeltaX);
+        minDeltaY = Math.max(minDeltaY, bounds.minDeltaY);
+        maxDeltaY = Math.min(maxDeltaY, bounds.maxDeltaY);
+      }
+      return {
+        x: clamp(deltaX, minDeltaX, maxDeltaX),
+        y: clamp(deltaY, minDeltaY, maxDeltaY)
+      };
+    },
+
+layoutDeltaBounds(rect) {
       const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
       const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
       const minVisibleX = Math.min(32, Math.max(8, rect.width * 0.18));
       const minVisibleY = Math.min(32, Math.max(8, rect.height * 0.18));
-      const minDeltaX = minVisibleX - rect.right;
-      const maxDeltaX = viewportWidth - minVisibleX - rect.left;
-      const minDeltaY = minVisibleY - rect.bottom;
-      const maxDeltaY = viewportHeight - minVisibleY - rect.top;
       return {
-        x: drag.originX + clamp(deltaX, minDeltaX, maxDeltaX),
-        y: drag.originY + clamp(deltaY, minDeltaY, maxDeltaY)
+        minDeltaX: minVisibleX - rect.right,
+        maxDeltaX: viewportWidth - minVisibleX - rect.left,
+        minDeltaY: minVisibleY - rect.bottom,
+        maxDeltaY: viewportHeight - minVisibleY - rect.top
       };
     },
 
@@ -777,46 +856,155 @@ handleLayoutKeydown(event) {
     },
 
 moveSelectedLayoutBy(deltaX, deltaY) {
-      const item = this.selectedItem();
-      if (!item) {
+      const items = this.selectedLayoutItemsFor();
+      if (!items.length) {
         return;
       }
 
-      this.withLayoutMutation(item, () => {
-        const adjustment = this.layoutAdjustmentFor(item);
-        if (!adjustment) {
-          return;
+      this.withLayoutMutation(items, () => {
+        for (const item of items) {
+          const adjustment = this.layoutAdjustmentFor(item);
+          if (!adjustment) {
+            continue;
+          }
+          adjustment.x = (adjustment.x || 0) + deltaX;
+          adjustment.y = (adjustment.y || 0) + deltaY;
+          this.applyLayoutAdjustment(item, adjustment);
         }
-        adjustment.x = (adjustment.x || 0) + deltaX;
-        adjustment.y = (adjustment.y || 0) + deltaY;
-        this.applyLayoutAdjustment(item, adjustment);
-      }, "Move element");
+      }, items.length > 1 ? "Move elements" : "Move element");
     },
 
-withLayoutMutation(item, mutate, label) {
-      this.ensureOriginalState(item);
-      const before = this.captureState(item);
+withLayoutMutation(items, mutate, label) {
+      const group = (Array.isArray(items) ? items : [items]).filter(Boolean);
+      if (!group.length) {
+        return;
+      }
+
+      for (const item of group) {
+        this.ensureOriginalState(item);
+      }
+      const before = group.map((item) => ({ item, state: this.captureState(item) }));
       mutate();
-      const after = this.captureState(item);
-      if (!sameState(before, after)) {
-        this.pushHistory(item, before, after, label);
-        this.markLayoutModified(item);
+      const changes = before
+        .map(({ item, state }) => ({
+          item,
+          before: state,
+          after: this.captureState(item)
+        }))
+        .filter((entry) => !sameState(entry.before, entry.after));
+      if (changes.length) {
+        this.pushHistoryEntries?.(changes, label);
+        for (const { item } of changes) {
+          this.markLayoutModified(item);
+        }
         this.renderBoxes?.();
         this.refreshToolbar?.();
       }
     },
 
 resetSelectedLayout() {
-      const item = this.selectedItem();
-      if (!item) {
+      const items = this.selectedLayoutItemsFor();
+      if (!items.length) {
         return;
       }
 
-      this.withLayoutMutation(item, () => {
-        this.clearLayoutAdjustment(item);
+      this.withLayoutMutation(items, () => {
+        for (const item of items) {
+          this.clearLayoutAdjustment(item);
+        }
       }, "Reset layout");
-      this.clearLayoutModifiedIfClean(item);
+      for (const item of items) {
+        this.clearLayoutModifiedIfClean(item);
+      }
       this.toast?.(this.t("layoutReset"));
+    },
+
+alignSelectedLayout(kind) {
+      const items = this.selectedLayoutItemsFor();
+      const primary = this.selectedItem();
+      if (!primary || items.length < 2 || !items.some((item) => item.id === primary.id)) {
+        return;
+      }
+
+      const anchorRect = this.itemBoxElement(primary)?.getBoundingClientRect?.();
+      if (!anchorRect) {
+        return;
+      }
+
+      this.withLayoutMutation(items, () => {
+        for (const item of items) {
+          if (item.id === primary.id) {
+            continue;
+          }
+          const rect = this.itemBoxElement(item)?.getBoundingClientRect?.();
+          const adjustment = this.layoutAdjustmentFor(item);
+          if (!rect || !adjustment) {
+            continue;
+          }
+          const delta = this.layoutAlignmentDelta(kind, anchorRect, rect);
+          adjustment.x = (adjustment.x || 0) + delta.x;
+          adjustment.y = (adjustment.y || 0) + delta.y;
+          this.applyLayoutAdjustment(item, adjustment);
+        }
+      }, "Align elements");
+    },
+
+layoutAlignmentDelta(kind, anchorRect, rect) {
+      switch (kind) {
+        case "left":
+          return { x: anchorRect.left - rect.left, y: 0 };
+        case "h-center":
+          return { x: anchorRect.left + anchorRect.width / 2 - (rect.left + rect.width / 2), y: 0 };
+        case "right":
+          return { x: anchorRect.right - rect.right, y: 0 };
+        case "top":
+          return { x: 0, y: anchorRect.top - rect.top };
+        case "v-center":
+          return { x: 0, y: anchorRect.top + anchorRect.height / 2 - (rect.top + rect.height / 2) };
+        case "bottom":
+          return { x: 0, y: anchorRect.bottom - rect.bottom };
+        default:
+          return { x: 0, y: 0 };
+      }
+    },
+
+matchSelectedLayoutSize(mode) {
+      const items = this.selectedLayoutItemsFor();
+      const primary = this.selectedItem();
+      if (!primary || items.length < 2 || !items.some((item) => item.id === primary.id)) {
+        return;
+      }
+
+      const anchorRect = this.itemBoxElement(primary)?.getBoundingClientRect?.();
+      if (!anchorRect) {
+        return;
+      }
+      const axes = {
+        width: mode === "width" || mode === "both",
+        height: mode === "height" || mode === "both"
+      };
+
+      this.withLayoutMutation(items, () => {
+        for (const item of items) {
+          if (item.id === primary.id) {
+            continue;
+          }
+          const adjustment = this.layoutAdjustmentFor(item);
+          if (!adjustment) {
+            continue;
+          }
+          const scale = clamp(adjustment.scale || 1, 0.2, 5);
+          this.ensureLayoutSizeBase(adjustment, axes);
+          if (axes.width) {
+            adjustment.width = anchorRect.width / scale;
+          }
+          if (axes.height) {
+            adjustment.height = anchorRect.height / scale;
+          }
+          this.applyLayoutSizeAdjustment(item, adjustment);
+          this.applyLayoutAdjustment(item, adjustment);
+        }
+      }, "Match element size");
     },
 
 clearLayoutAdjustment(item) {

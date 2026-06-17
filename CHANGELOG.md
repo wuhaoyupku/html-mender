@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.10
+
+- Added temporary multi-selection in layout mode using `Shift` / `Cmd` / `Ctrl` click.
+- Added group movement, safe scaling, real resize, reset, alignment, and same-size layout actions for the current multi-selection.
+- Added batch undo/redo so one group layout operation reverts as a single step.
+
 ## 0.1.9
 
 - Fixed local injection for complex HTML files that include embedded `</body>` strings inside JavaScript data.

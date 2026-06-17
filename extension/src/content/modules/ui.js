@@ -270,14 +270,22 @@ bindUiEvents() {
         if (!item) {
           return;
         }
-        this.closeOpenMenus();
-        this.selectItem(item.id);
         if (this.isLayoutMode?.()) {
           if (performance.now() < (this.suppressLayoutClickUntil || 0)) {
             return;
           }
+          this.closeOpenMenus();
+          if (this.isSelectionToggleEvent?.(event)) {
+            this.selectItem(item.id, { toggle: true });
+          } else if (this.isItemSelected?.(item.id) && (this.selectedIds?.size || 0) > 1) {
+            this.selectItem(item.id, { preserveGroup: true });
+          } else {
+            this.selectItem(item.id);
+          }
           return;
         }
+        this.closeOpenMenus();
+        this.selectItem(item.id);
         if (item.type === "text") {
           this.enterTextEdit(item, event);
         }
@@ -291,6 +299,9 @@ bindUiEvents() {
         const item = this.items.get(box.dataset.itemId);
         if (this.isLayoutMode?.()) {
           if (!item) {
+            return;
+          }
+          if (this.isSelectionToggleEvent?.(event)) {
             return;
           }
           const resizeHandle = event.target.closest("[data-layout-resize-handle]");
@@ -371,7 +382,7 @@ renderBoxes() {
         if (!intersectsViewport(rect)) {
           continue;
         }
-        const selected = item.id === this.selectedId;
+        const selected = this.isItemSelected?.(item.id) || item.id === this.selectedId;
         const editing = item.id === this.editingTextId;
         const overflow = item.type === "text" && hasTextOverflow(item.element);
         entries.push({ item, rect, selected, editing, overflow });
@@ -400,6 +411,7 @@ boxTemplate(item, rect, selected, editing, overflow) {
         layoutMode && (this.normalizeLayoutToolMode?.(this.layoutToolMode) || "moveScale") === "size" ? "is-layout-size-mode" : "",
         item.positioned ? "is-positioned" : "",
         selected ? "is-selected" : "",
+        selected && item.id === this.selectedId ? "is-primary" : "",
         editing ? "is-editing" : "",
         overflow ? "has-overflow" : ""
       ].filter(Boolean).join(" ");
@@ -409,7 +421,7 @@ boxTemplate(item, rect, selected, editing, overflow) {
           data-item-id="${escapeAttr(item.id)}"
           style="left:${round(rect.left)}px;top:${round(rect.top)}px;width:${round(rect.width)}px;height:${round(rect.height)}px">
           <span class="box-label">${typeLabel}${positionLabel}${offsetLabel}${overflow ? ` ${this.t("overflow")}` : ""}</span>
-          ${layoutMode && selected ? this.layoutHandlesTemplate() : ""}
+          ${layoutMode && selected && item.id === this.selectedId ? this.layoutHandlesTemplate() : ""}
         </div>
       `;
     },
@@ -440,6 +452,15 @@ layoutResizeHandlesTemplate() {
         <button class="layout-handle layout-resize-handle handle-s" type="button" data-layout-resize-handle="s" aria-label="${label}"></button>
         <button class="layout-handle layout-resize-handle handle-sw" type="button" data-layout-resize-handle="sw" aria-label="${label}"></button>
         <button class="layout-handle layout-resize-handle handle-w" type="button" data-layout-resize-handle="w" aria-label="${label}"></button>
+      `;
+    },
+
+layoutIconButton(action, labelKey, iconClass) {
+      const label = this.t(labelKey);
+      return `
+        <button class="icon-button layout-icon-button" type="button" data-action="${escapeAttr(action)}" title="${escapeAttr(label)}" aria-label="${escapeAttr(label)}">
+          <span class="layout-icon ${escapeAttr(iconClass)}" aria-hidden="true"><span></span><span></span><span></span></span>
+        </button>
       `;
     },
 
@@ -674,14 +695,21 @@ refreshExportModeControl() {
         return;
       }
 
-      const selectionType = item && this.isLayoutMode?.() ? "layout" : (item?.type || "none");
-      this.editPopover.dataset.selection = selectionType;
+	      const selectionType = item && this.isLayoutMode?.() ? "layout" : (item?.type || "none");
+	      this.editPopover.dataset.selection = selectionType;
+	      if (selectionType === "layout") {
+	        const selectedCount = this.selectedLayoutItemsFor?.(item).length || 1;
+	        this.editPopover.dataset.layoutSelection = selectedCount > 1 ? "multi" : "single";
+	      } else {
+	        delete this.editPopover.dataset.layoutSelection;
+	      }
 
-      if (!item || !["text", "image", "layout"].includes(selectionType)) {
-        this.editPopover.hidden = true;
-        delete this.editPopover.dataset.itemId;
-        return;
-      }
+	      if (!item || !["text", "image", "layout"].includes(selectionType)) {
+	        this.editPopover.hidden = true;
+	        delete this.editPopover.dataset.itemId;
+	        delete this.editPopover.dataset.layoutSelection;
+	        return;
+	      }
 
       if (!this.editPopover.hidden && this.editPopover.dataset.itemId === item.id && this.isUiInteractionActive()) {
         return;
@@ -871,9 +899,25 @@ template() {
             </div>
 
             <div class="group group-layout">
-              <button type="button" data-action="layout-tool-move-scale" aria-pressed="${this.layoutToolMode === "moveScale" ? "true" : "false"}">${escapeHtml(this.t("moveScaleMode"))}</button>
-              <button type="button" data-action="layout-tool-size" aria-pressed="${this.layoutToolMode === "size" ? "true" : "false"}">${escapeHtml(this.t("sizeMode"))}</button>
-              <button type="button" data-action="layout-reset">${escapeHtml(this.t("resetLayout"))}</button>
+              <div class="layout-tool-row">
+                <button type="button" data-action="layout-tool-move-scale" aria-pressed="${this.layoutToolMode === "moveScale" ? "true" : "false"}">${escapeHtml(this.t("moveScaleMode"))}</button>
+                <button type="button" data-action="layout-tool-size" aria-pressed="${this.layoutToolMode === "size" ? "true" : "false"}">${escapeHtml(this.t("sizeMode"))}</button>
+                <span class="layout-separator layout-multi" aria-hidden="true"></span>
+                <button class="layout-multi" type="button" data-action="layout-same-height">${escapeHtml(this.t("layoutSameHeight"))}</button>
+                <button class="layout-multi" type="button" data-action="layout-same-width">${escapeHtml(this.t("layoutSameWidth"))}</button>
+                <button class="layout-multi" type="button" data-action="layout-same-size">${escapeHtml(this.t("layoutSameSize"))}</button>
+                <span class="layout-separator" aria-hidden="true"></span>
+                <button type="button" data-action="layout-reset">${escapeHtml(this.t("resetLayout"))}</button>
+              </div>
+              <div class="layout-tool-row layout-align-row layout-multi">
+                ${this.layoutIconButton("layout-align-left", "layoutAlignLeft", "align-left")}
+                ${this.layoutIconButton("layout-align-h-center", "layoutAlignHCenter", "align-h-center")}
+                ${this.layoutIconButton("layout-align-right", "layoutAlignRight", "align-right")}
+                <span class="layout-separator" aria-hidden="true"></span>
+                ${this.layoutIconButton("layout-align-top", "layoutAlignTop", "align-top")}
+                ${this.layoutIconButton("layout-align-v-center", "layoutAlignVCenter", "align-v-center")}
+                ${this.layoutIconButton("layout-align-bottom", "layoutAlignBottom", "align-bottom")}
+              </div>
             </div>
         </div>
         <div class="combo-menu font-menu" data-combo-menu="fontFamily" role="listbox" hidden></div>

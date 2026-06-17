@@ -49,6 +49,8 @@ enterTextEdit(item, event) {
         this.commitActiveText();
         this.ensureOriginalState(item);
         this.selectedId = item.id;
+        this.selectedIds?.clear();
+        this.selectedIds?.add(item.id);
         this.editingTextId = item.id;
         this.savedTextRange = null;
         this.textEditBefore = this.captureState(item);

@@ -18,6 +18,7 @@
       this.elementIds = new WeakMap();
       this.nextId = 1;
       this.selectedId = null;
+      this.selectedIds = new Set();
       this.editingTextId = null;
       this.textEditRestore = null;
       this.textEditBefore = null;

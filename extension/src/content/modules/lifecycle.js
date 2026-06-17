@@ -90,6 +90,7 @@ async exit() {
       this.commitActiveText();
       this.active = false;
       this.selectedId = null;
+      this.selectedIds?.clear();
       this.editingTextId = null;
       this.savedTextRange = null;
       this.items.clear();
@@ -232,6 +233,33 @@ async handleAction(action) {
           return;
         case "layout-tool-size":
           this.setLayoutToolMode?.("size");
+          return;
+        case "layout-align-left":
+          this.alignSelectedLayout?.("left");
+          return;
+        case "layout-align-h-center":
+          this.alignSelectedLayout?.("h-center");
+          return;
+        case "layout-align-right":
+          this.alignSelectedLayout?.("right");
+          return;
+        case "layout-align-top":
+          this.alignSelectedLayout?.("top");
+          return;
+        case "layout-align-v-center":
+          this.alignSelectedLayout?.("v-center");
+          return;
+        case "layout-align-bottom":
+          this.alignSelectedLayout?.("bottom");
+          return;
+        case "layout-same-width":
+          this.matchSelectedLayoutSize?.("width");
+          return;
+        case "layout-same-height":
+          this.matchSelectedLayoutSize?.("height");
+          return;
+        case "layout-same-size":
+          this.matchSelectedLayoutSize?.("both");
           return;
         case "undo":
           this.undo();
@@ -379,19 +407,43 @@ scan() {
 
       this.items = next;
 
-      if (this.selectedId && !this.items.has(this.selectedId) && this.editingTextId !== this.selectedId) {
-        this.selectedId = null;
-      }
+      this.syncSelectionAfterScan();
 
       this.renderBoxes();
       this.refreshToolbar();
     },
 
-selectItem(id) {
+selectItem(id, options = {}) {
       if (this.editingTextId && this.editingTextId !== id) {
         this.commitActiveText();
       }
-      this.selectedId = id;
+
+      this.selectedIds = this.selectedIds || new Set();
+      const canMultiSelect = this.isLayoutMode?.() && (options.toggle || options.extend || options.preserveGroup);
+      if (canMultiSelect) {
+        if (options.preserveGroup && this.selectedIds.has(id)) {
+          this.selectedId = id;
+        } else if ((options.toggle || options.extend) && this.selectedIds.has(id)) {
+          this.selectedIds.delete(id);
+          this.selectedId = this.selectedId === id ? this.lastSelectedId() : this.selectedId;
+        } else if (id) {
+          this.selectedIds.add(id);
+          this.selectedId = id;
+        }
+
+        if (!this.selectedIds.size) {
+          this.selectedId = null;
+        } else if (!this.selectedId || !this.selectedIds.has(this.selectedId)) {
+          this.selectedId = this.lastSelectedId();
+        }
+      } else {
+        this.selectedIds.clear();
+        if (id) {
+          this.selectedIds.add(id);
+        }
+        this.selectedId = id;
+      }
+
       this.refreshToolbar();
       this.renderBoxes();
     },
@@ -402,6 +454,7 @@ clearSelection() {
       }
 
       this.selectedId = null;
+      this.selectedIds?.clear();
       this.savedTextRange = null;
       this.colorTargetId = null;
       this.closeOpenMenus?.();
@@ -411,6 +464,54 @@ clearSelection() {
 
 selectedItem() {
       return this.selectedId ? this.items.get(this.selectedId) : null;
+    },
+
+selectedItems() {
+      const ids = this.selectedIds?.size
+        ? Array.from(this.selectedIds)
+        : (this.selectedId ? [this.selectedId] : []);
+      return ids
+        .map((id) => this.items.get(id) || this.itemFromHistoryId?.(id))
+        .filter(Boolean);
+    },
+
+isItemSelected(id) {
+      return Boolean(id && (this.selectedIds?.has(id) || this.selectedId === id));
+    },
+
+lastSelectedId() {
+      const ids = Array.from(this.selectedIds || []);
+      return ids.length ? ids[ids.length - 1] : null;
+    },
+
+isSelectionToggleEvent(event) {
+      return Boolean(event?.shiftKey || event?.metaKey || event?.ctrlKey);
+    },
+
+syncSelectionAfterScan() {
+      this.selectedIds = this.selectedIds || new Set();
+      for (const id of Array.from(this.selectedIds)) {
+        if (!this.items.has(id) && this.editingTextId !== id) {
+          this.selectedIds.delete(id);
+        }
+      }
+
+      if (this.selectedId && !this.items.has(this.selectedId) && this.editingTextId !== this.selectedId) {
+        this.selectedId = this.lastSelectedId();
+      }
+
+      if (this.selectedId && this.items.has(this.selectedId)) {
+        if (this.isLayoutMode?.()) {
+          this.selectedIds.add(this.selectedId);
+        } else {
+          this.selectedIds.clear();
+          this.selectedIds.add(this.selectedId);
+        }
+      } else if (!this.selectedIds.size) {
+        this.selectedId = null;
+      } else {
+        this.selectedId = this.lastSelectedId();
+      }
     },
 
 summaryText() {
@@ -500,8 +601,8 @@ handleDocumentPointerDown(event) {
       }
 
       const target = event.target;
-      const item = this.selectedItem() || this.itemFromHistoryId?.(this.selectedId);
-      if (item && this.eventTargetsItem(target, item)) {
+      const selectedItems = this.selectedItems();
+      if (selectedItems.some((item) => this.eventTargetsItem(target, item))) {
         return;
       }
 

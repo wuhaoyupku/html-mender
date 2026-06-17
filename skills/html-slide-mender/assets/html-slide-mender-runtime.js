@@ -290,6 +290,15 @@
       resetLayout: "恢复",
       moveScaleMode: "移动缩放",
       sizeMode: "改宽高",
+      layoutAlignLeft: "左齐",
+      layoutAlignHCenter: "水平居中",
+      layoutAlignRight: "右齐",
+      layoutAlignTop: "上齐",
+      layoutAlignVCenter: "垂直居中",
+      layoutAlignBottom: "下齐",
+      layoutSameWidth: "同宽",
+      layoutSameHeight: "同高",
+      layoutSameSize: "同宽高",
       scaleLayout: "缩放",
       resizeLayout: "改宽高",
       started: "编辑器已启动。",
@@ -364,6 +373,15 @@
       resetLayout: "Reset",
       moveScaleMode: "Move/scale",
       sizeMode: "Resize",
+      layoutAlignLeft: "Left",
+      layoutAlignHCenter: "H center",
+      layoutAlignRight: "Right",
+      layoutAlignTop: "Top",
+      layoutAlignVCenter: "V center",
+      layoutAlignBottom: "Bottom",
+      layoutSameWidth: "Same W",
+      layoutSameHeight: "Same H",
+      layoutSameSize: "Same size",
       scaleLayout: "Scale",
       resizeLayout: "Resize",
       started: "Editor started.",
@@ -781,17 +799,235 @@
       display: flex;
     }
 
-    .edit-popover[data-selection="layout"] .group-layout {
-      display: flex;
-    }
+	    .edit-popover[data-selection="layout"] .group-layout {
+	      display: grid;
+	    }
+
+	    .edit-popover[data-layout-selection="single"] .layout-multi {
+	      display: none;
+	    }
 
     .edit-popover[data-selection="text"] .group-text {
       display: grid;
     }
 
-    .group-text {
-      gap: 6px;
-    }
+	    .group-text {
+	      gap: 6px;
+	    }
+
+	    .group-layout {
+	      gap: 6px;
+	      max-width: min(470px, calc(100vw - 36px));
+	    }
+
+	    .layout-tool-row {
+	      display: flex;
+	      align-items: center;
+	      gap: 5px;
+	      min-width: 0;
+	      flex-wrap: nowrap;
+	    }
+
+	    .layout-align-row {
+	      justify-content: center;
+	    }
+
+	    .layout-separator {
+	      display: inline-block;
+	      width: 1px;
+	      height: 22px;
+	      margin: 0 2px;
+	      background: #d6deea;
+	    }
+
+	    .layout-icon-button {
+	      width: 32px;
+	      min-width: 32px;
+	      padding: 0;
+	      display: inline-flex;
+	      align-items: center;
+	      justify-content: center;
+	    }
+
+	    .layout-icon {
+	      position: relative;
+	      display: inline-block;
+	      width: 18px;
+	      height: 18px;
+	    }
+
+	    .layout-icon::before,
+	    .layout-icon span {
+	      content: "";
+	      position: absolute;
+	      display: block;
+	      border-radius: 999px;
+	      background: #172033;
+	    }
+
+	    .layout-icon::before {
+	      background: #647084;
+	    }
+
+	    .layout-icon.align-left::before,
+	    .layout-icon.align-h-center::before,
+	    .layout-icon.align-right::before {
+	      top: 2px;
+	      bottom: 2px;
+	      width: 2px;
+	    }
+
+	    .layout-icon.align-left::before {
+	      left: 2px;
+	    }
+
+	    .layout-icon.align-h-center::before {
+	      left: 8px;
+	    }
+
+	    .layout-icon.align-right::before {
+	      right: 2px;
+	    }
+
+	    .layout-icon.align-left span,
+	    .layout-icon.align-h-center span,
+	    .layout-icon.align-right span {
+	      height: 2px;
+	    }
+
+	    .layout-icon.align-left span:nth-child(1) {
+	      left: 5px;
+	      top: 4px;
+	      width: 10px;
+	    }
+
+	    .layout-icon.align-left span:nth-child(2) {
+	      left: 5px;
+	      top: 8px;
+	      width: 7px;
+	    }
+
+	    .layout-icon.align-left span:nth-child(3) {
+	      left: 5px;
+	      top: 12px;
+	      width: 12px;
+	    }
+
+	    .layout-icon.align-h-center span:nth-child(1) {
+	      left: 4px;
+	      top: 4px;
+	      width: 10px;
+	    }
+
+	    .layout-icon.align-h-center span:nth-child(2) {
+	      left: 2px;
+	      top: 8px;
+	      width: 14px;
+	    }
+
+	    .layout-icon.align-h-center span:nth-child(3) {
+	      left: 5px;
+	      top: 12px;
+	      width: 8px;
+	    }
+
+	    .layout-icon.align-right span:nth-child(1) {
+	      right: 5px;
+	      top: 4px;
+	      width: 10px;
+	    }
+
+	    .layout-icon.align-right span:nth-child(2) {
+	      right: 5px;
+	      top: 8px;
+	      width: 7px;
+	    }
+
+	    .layout-icon.align-right span:nth-child(3) {
+	      right: 5px;
+	      top: 12px;
+	      width: 12px;
+	    }
+
+	    .layout-icon.align-top::before,
+	    .layout-icon.align-v-center::before,
+	    .layout-icon.align-bottom::before {
+	      left: 2px;
+	      right: 2px;
+	      height: 2px;
+	    }
+
+	    .layout-icon.align-top::before {
+	      top: 2px;
+	    }
+
+	    .layout-icon.align-v-center::before {
+	      top: 8px;
+	    }
+
+	    .layout-icon.align-bottom::before {
+	      bottom: 2px;
+	    }
+
+	    .layout-icon.align-top span,
+	    .layout-icon.align-v-center span,
+	    .layout-icon.align-bottom span {
+	      width: 2px;
+	    }
+
+	    .layout-icon.align-top span:nth-child(1) {
+	      left: 4px;
+	      top: 5px;
+	      height: 9px;
+	    }
+
+	    .layout-icon.align-top span:nth-child(2) {
+	      left: 8px;
+	      top: 5px;
+	      height: 11px;
+	    }
+
+	    .layout-icon.align-top span:nth-child(3) {
+	      left: 12px;
+	      top: 5px;
+	      height: 7px;
+	    }
+
+	    .layout-icon.align-v-center span:nth-child(1) {
+	      left: 4px;
+	      top: 4px;
+	      height: 10px;
+	    }
+
+	    .layout-icon.align-v-center span:nth-child(2) {
+	      left: 8px;
+	      top: 2px;
+	      height: 14px;
+	    }
+
+	    .layout-icon.align-v-center span:nth-child(3) {
+	      left: 12px;
+	      top: 5px;
+	      height: 8px;
+	    }
+
+	    .layout-icon.align-bottom span:nth-child(1) {
+	      left: 4px;
+	      bottom: 5px;
+	      height: 9px;
+	    }
+
+	    .layout-icon.align-bottom span:nth-child(2) {
+	      left: 8px;
+	      bottom: 5px;
+	      height: 11px;
+	    }
+
+	    .layout-icon.align-bottom span:nth-child(3) {
+	      left: 12px;
+	      bottom: 5px;
+	      height: 7px;
+	    }
 
     .text-row {
       display: flex;
@@ -1210,10 +1446,22 @@
       cursor: default;
     }
 
-    .box-layout:hover,
-    .box-layout.is-selected {
-      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.16);
-    }
+	    .box-layout:hover,
+	    .box-layout.is-selected {
+	      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.16);
+	    }
+
+	    .box-layout.is-selected:not(.is-primary) {
+	      border-style: solid;
+	      border-color: #a78bfa;
+	      background: rgba(124, 58, 237, 0.03);
+	      box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.1);
+	    }
+
+	    .box-layout.is-primary {
+	      border-color: #6d28d9;
+	      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+	    }
 
     .box-layout.is-layout-dragging {
       cursor: grabbing;
@@ -1473,6 +1721,7 @@ async exit() {
       this.commitActiveText();
       this.active = false;
       this.selectedId = null;
+      this.selectedIds?.clear();
       this.editingTextId = null;
       this.savedTextRange = null;
       this.items.clear();
@@ -1615,6 +1864,33 @@ async handleAction(action) {
           return;
         case "layout-tool-size":
           this.setLayoutToolMode?.("size");
+          return;
+        case "layout-align-left":
+          this.alignSelectedLayout?.("left");
+          return;
+        case "layout-align-h-center":
+          this.alignSelectedLayout?.("h-center");
+          return;
+        case "layout-align-right":
+          this.alignSelectedLayout?.("right");
+          return;
+        case "layout-align-top":
+          this.alignSelectedLayout?.("top");
+          return;
+        case "layout-align-v-center":
+          this.alignSelectedLayout?.("v-center");
+          return;
+        case "layout-align-bottom":
+          this.alignSelectedLayout?.("bottom");
+          return;
+        case "layout-same-width":
+          this.matchSelectedLayoutSize?.("width");
+          return;
+        case "layout-same-height":
+          this.matchSelectedLayoutSize?.("height");
+          return;
+        case "layout-same-size":
+          this.matchSelectedLayoutSize?.("both");
           return;
         case "undo":
           this.undo();
@@ -1762,19 +2038,43 @@ scan() {
 
       this.items = next;
 
-      if (this.selectedId && !this.items.has(this.selectedId) && this.editingTextId !== this.selectedId) {
-        this.selectedId = null;
-      }
+      this.syncSelectionAfterScan();
 
       this.renderBoxes();
       this.refreshToolbar();
     },
 
-selectItem(id) {
+selectItem(id, options = {}) {
       if (this.editingTextId && this.editingTextId !== id) {
         this.commitActiveText();
       }
-      this.selectedId = id;
+
+      this.selectedIds = this.selectedIds || new Set();
+      const canMultiSelect = this.isLayoutMode?.() && (options.toggle || options.extend || options.preserveGroup);
+      if (canMultiSelect) {
+        if (options.preserveGroup && this.selectedIds.has(id)) {
+          this.selectedId = id;
+        } else if ((options.toggle || options.extend) && this.selectedIds.has(id)) {
+          this.selectedIds.delete(id);
+          this.selectedId = this.selectedId === id ? this.lastSelectedId() : this.selectedId;
+        } else if (id) {
+          this.selectedIds.add(id);
+          this.selectedId = id;
+        }
+
+        if (!this.selectedIds.size) {
+          this.selectedId = null;
+        } else if (!this.selectedId || !this.selectedIds.has(this.selectedId)) {
+          this.selectedId = this.lastSelectedId();
+        }
+      } else {
+        this.selectedIds.clear();
+        if (id) {
+          this.selectedIds.add(id);
+        }
+        this.selectedId = id;
+      }
+
       this.refreshToolbar();
       this.renderBoxes();
     },
@@ -1785,6 +2085,7 @@ clearSelection() {
       }
 
       this.selectedId = null;
+      this.selectedIds?.clear();
       this.savedTextRange = null;
       this.colorTargetId = null;
       this.closeOpenMenus?.();
@@ -1794,6 +2095,54 @@ clearSelection() {
 
 selectedItem() {
       return this.selectedId ? this.items.get(this.selectedId) : null;
+    },
+
+selectedItems() {
+      const ids = this.selectedIds?.size
+        ? Array.from(this.selectedIds)
+        : (this.selectedId ? [this.selectedId] : []);
+      return ids
+        .map((id) => this.items.get(id) || this.itemFromHistoryId?.(id))
+        .filter(Boolean);
+    },
+
+isItemSelected(id) {
+      return Boolean(id && (this.selectedIds?.has(id) || this.selectedId === id));
+    },
+
+lastSelectedId() {
+      const ids = Array.from(this.selectedIds || []);
+      return ids.length ? ids[ids.length - 1] : null;
+    },
+
+isSelectionToggleEvent(event) {
+      return Boolean(event?.shiftKey || event?.metaKey || event?.ctrlKey);
+    },
+
+syncSelectionAfterScan() {
+      this.selectedIds = this.selectedIds || new Set();
+      for (const id of Array.from(this.selectedIds)) {
+        if (!this.items.has(id) && this.editingTextId !== id) {
+          this.selectedIds.delete(id);
+        }
+      }
+
+      if (this.selectedId && !this.items.has(this.selectedId) && this.editingTextId !== this.selectedId) {
+        this.selectedId = this.lastSelectedId();
+      }
+
+      if (this.selectedId && this.items.has(this.selectedId)) {
+        if (this.isLayoutMode?.()) {
+          this.selectedIds.add(this.selectedId);
+        } else {
+          this.selectedIds.clear();
+          this.selectedIds.add(this.selectedId);
+        }
+      } else if (!this.selectedIds.size) {
+        this.selectedId = null;
+      } else {
+        this.selectedId = this.lastSelectedId();
+      }
     },
 
 summaryText() {
@@ -1883,8 +2232,8 @@ handleDocumentPointerDown(event) {
       }
 
       const target = event.target;
-      const item = this.selectedItem() || this.itemFromHistoryId?.(this.selectedId);
-      if (item && this.eventTargetsItem(target, item)) {
+      const selectedItems = this.selectedItems();
+      if (selectedItems.some((item) => this.eventTargetsItem(target, item))) {
         return;
       }
 
@@ -2551,14 +2900,22 @@ bindUiEvents() {
         if (!item) {
           return;
         }
-        this.closeOpenMenus();
-        this.selectItem(item.id);
         if (this.isLayoutMode?.()) {
           if (performance.now() < (this.suppressLayoutClickUntil || 0)) {
             return;
           }
+          this.closeOpenMenus();
+          if (this.isSelectionToggleEvent?.(event)) {
+            this.selectItem(item.id, { toggle: true });
+          } else if (this.isItemSelected?.(item.id) && (this.selectedIds?.size || 0) > 1) {
+            this.selectItem(item.id, { preserveGroup: true });
+          } else {
+            this.selectItem(item.id);
+          }
           return;
         }
+        this.closeOpenMenus();
+        this.selectItem(item.id);
         if (item.type === "text") {
           this.enterTextEdit(item, event);
         }
@@ -2572,6 +2929,9 @@ bindUiEvents() {
         const item = this.items.get(box.dataset.itemId);
         if (this.isLayoutMode?.()) {
           if (!item) {
+            return;
+          }
+          if (this.isSelectionToggleEvent?.(event)) {
             return;
           }
           const resizeHandle = event.target.closest("[data-layout-resize-handle]");
@@ -2652,7 +3012,7 @@ renderBoxes() {
         if (!intersectsViewport(rect)) {
           continue;
         }
-        const selected = item.id === this.selectedId;
+        const selected = this.isItemSelected?.(item.id) || item.id === this.selectedId;
         const editing = item.id === this.editingTextId;
         const overflow = item.type === "text" && hasTextOverflow(item.element);
         entries.push({ item, rect, selected, editing, overflow });
@@ -2681,6 +3041,7 @@ boxTemplate(item, rect, selected, editing, overflow) {
         layoutMode && (this.normalizeLayoutToolMode?.(this.layoutToolMode) || "moveScale") === "size" ? "is-layout-size-mode" : "",
         item.positioned ? "is-positioned" : "",
         selected ? "is-selected" : "",
+        selected && item.id === this.selectedId ? "is-primary" : "",
         editing ? "is-editing" : "",
         overflow ? "has-overflow" : ""
       ].filter(Boolean).join(" ");
@@ -2690,7 +3051,7 @@ boxTemplate(item, rect, selected, editing, overflow) {
           data-item-id="${escapeAttr(item.id)}"
           style="left:${round(rect.left)}px;top:${round(rect.top)}px;width:${round(rect.width)}px;height:${round(rect.height)}px">
           <span class="box-label">${typeLabel}${positionLabel}${offsetLabel}${overflow ? ` ${this.t("overflow")}` : ""}</span>
-          ${layoutMode && selected ? this.layoutHandlesTemplate() : ""}
+          ${layoutMode && selected && item.id === this.selectedId ? this.layoutHandlesTemplate() : ""}
         </div>
       `;
     },
@@ -2721,6 +3082,15 @@ layoutResizeHandlesTemplate() {
         <button class="layout-handle layout-resize-handle handle-s" type="button" data-layout-resize-handle="s" aria-label="${label}"></button>
         <button class="layout-handle layout-resize-handle handle-sw" type="button" data-layout-resize-handle="sw" aria-label="${label}"></button>
         <button class="layout-handle layout-resize-handle handle-w" type="button" data-layout-resize-handle="w" aria-label="${label}"></button>
+      `;
+    },
+
+layoutIconButton(action, labelKey, iconClass) {
+      const label = this.t(labelKey);
+      return `
+        <button class="icon-button layout-icon-button" type="button" data-action="${escapeAttr(action)}" title="${escapeAttr(label)}" aria-label="${escapeAttr(label)}">
+          <span class="layout-icon ${escapeAttr(iconClass)}" aria-hidden="true"><span></span><span></span><span></span></span>
+        </button>
       `;
     },
 
@@ -2955,14 +3325,21 @@ refreshExportModeControl() {
         return;
       }
 
-      const selectionType = item && this.isLayoutMode?.() ? "layout" : (item?.type || "none");
-      this.editPopover.dataset.selection = selectionType;
+	      const selectionType = item && this.isLayoutMode?.() ? "layout" : (item?.type || "none");
+	      this.editPopover.dataset.selection = selectionType;
+	      if (selectionType === "layout") {
+	        const selectedCount = this.selectedLayoutItemsFor?.(item).length || 1;
+	        this.editPopover.dataset.layoutSelection = selectedCount > 1 ? "multi" : "single";
+	      } else {
+	        delete this.editPopover.dataset.layoutSelection;
+	      }
 
-      if (!item || !["text", "image", "layout"].includes(selectionType)) {
-        this.editPopover.hidden = true;
-        delete this.editPopover.dataset.itemId;
-        return;
-      }
+	      if (!item || !["text", "image", "layout"].includes(selectionType)) {
+	        this.editPopover.hidden = true;
+	        delete this.editPopover.dataset.itemId;
+	        delete this.editPopover.dataset.layoutSelection;
+	        return;
+	      }
 
       if (!this.editPopover.hidden && this.editPopover.dataset.itemId === item.id && this.isUiInteractionActive()) {
         return;
@@ -3146,9 +3523,25 @@ template() {
             </div>
 
             <div class="group group-layout">
-              <button type="button" data-action="layout-tool-move-scale" aria-pressed="${this.layoutToolMode === "moveScale" ? "true" : "false"}">${escapeHtml(this.t("moveScaleMode"))}</button>
-              <button type="button" data-action="layout-tool-size" aria-pressed="${this.layoutToolMode === "size" ? "true" : "false"}">${escapeHtml(this.t("sizeMode"))}</button>
-              <button type="button" data-action="layout-reset">${escapeHtml(this.t("resetLayout"))}</button>
+              <div class="layout-tool-row">
+                <button type="button" data-action="layout-tool-move-scale" aria-pressed="${this.layoutToolMode === "moveScale" ? "true" : "false"}">${escapeHtml(this.t("moveScaleMode"))}</button>
+                <button type="button" data-action="layout-tool-size" aria-pressed="${this.layoutToolMode === "size" ? "true" : "false"}">${escapeHtml(this.t("sizeMode"))}</button>
+                <span class="layout-separator layout-multi" aria-hidden="true"></span>
+                <button class="layout-multi" type="button" data-action="layout-same-height">${escapeHtml(this.t("layoutSameHeight"))}</button>
+                <button class="layout-multi" type="button" data-action="layout-same-width">${escapeHtml(this.t("layoutSameWidth"))}</button>
+                <button class="layout-multi" type="button" data-action="layout-same-size">${escapeHtml(this.t("layoutSameSize"))}</button>
+                <span class="layout-separator" aria-hidden="true"></span>
+                <button type="button" data-action="layout-reset">${escapeHtml(this.t("resetLayout"))}</button>
+              </div>
+              <div class="layout-tool-row layout-align-row layout-multi">
+                ${this.layoutIconButton("layout-align-left", "layoutAlignLeft", "align-left")}
+                ${this.layoutIconButton("layout-align-h-center", "layoutAlignHCenter", "align-h-center")}
+                ${this.layoutIconButton("layout-align-right", "layoutAlignRight", "align-right")}
+                <span class="layout-separator" aria-hidden="true"></span>
+                ${this.layoutIconButton("layout-align-top", "layoutAlignTop", "align-top")}
+                ${this.layoutIconButton("layout-align-v-center", "layoutAlignVCenter", "align-v-center")}
+                ${this.layoutIconButton("layout-align-bottom", "layoutAlignBottom", "align-bottom")}
+              </div>
             </div>
         </div>
         <div class="combo-menu font-menu" data-combo-menu="fontFamily" role="listbox" hidden></div>
@@ -3432,6 +3825,8 @@ enterTextEdit(item, event) {
         this.commitActiveText();
         this.ensureOriginalState(item);
         this.selectedId = item.id;
+        this.selectedIds?.clear();
+        this.selectedIds?.add(item.id);
         this.editingTextId = item.id;
         this.savedTextRange = null;
         this.textEditBefore = this.captureState(item);
@@ -4508,6 +4903,15 @@ setEditorMode(mode) {
       this.commitActiveText?.();
       this.editMode = nextMode;
       this.closeOpenMenus?.();
+      if (nextMode === "layout" && this.selectedId) {
+        this.selectedIds?.add(this.selectedId);
+      } else if (nextMode === "content") {
+        const selectedId = this.selectedId;
+        this.selectedIds?.clear();
+        if (selectedId) {
+          this.selectedIds?.add(selectedId);
+        }
+      }
       this.scheduleScan(0);
       this.refreshToolbar?.();
       this.renderBoxes?.();
@@ -4637,6 +5041,88 @@ refreshLayoutToolButtons() {
       }
     },
 
+selectedLayoutItemsFor(triggerItem = null) {
+      const selected = this.selectedItems?.() || [];
+      const group = selected
+        .filter((item) => this.layoutTargetForItem(item))
+        .filter((item, index, items) => items.findIndex((candidate) => candidate.id === item.id) === index);
+      if (triggerItem && group.some((item) => item.id === triggerItem.id)) {
+        return group;
+      }
+      return triggerItem && this.layoutTargetForItem(triggerItem) ? [triggerItem] : group;
+    },
+
+prepareLayoutInteractionSelection(item) {
+      if (!item) {
+        return [];
+      }
+      if (this.isItemSelected?.(item.id) && (this.selectedIds?.size || 0) > 1) {
+        this.selectItem(item.id, { preserveGroup: true });
+      } else {
+        this.selectItem(item.id);
+      }
+      return this.selectedLayoutItemsFor(item);
+    },
+
+layoutInteractionEntries(items) {
+      return items.map((item) => {
+        const adjustment = this.layoutAdjustmentFor(item);
+        const target = adjustment?.target;
+        if (!target) {
+          return null;
+        }
+        return {
+          item,
+          adjustment,
+          target,
+          before: null,
+          startRect: target.getBoundingClientRect(),
+          originX: adjustment.x || 0,
+          originY: adjustment.y || 0,
+          originScale: adjustment.scale || 1
+        };
+      }).filter(Boolean);
+    },
+
+captureLayoutBatchBefore(entries) {
+      for (const entry of entries) {
+        this.ensureOriginalState(entry.item);
+        entry.before = this.captureState(entry.item);
+      }
+    },
+
+restoreLayoutBatch(entries) {
+      for (const entry of entries) {
+        if (entry.before) {
+          this.restoreState(entry.item, entry.before);
+          this.layoutAdjustments.delete(entry.item.id);
+        }
+      }
+      this.renderBoxes?.();
+      this.refreshToolbar?.();
+    },
+
+finishLayoutBatch(entries, label) {
+      const changes = entries
+        .filter((entry) => entry.before)
+        .map((entry) => ({
+          item: entry.item,
+          before: entry.before,
+          after: this.captureState(entry.item)
+        }))
+        .filter((entry) => !sameState(entry.before, entry.after));
+      if (!changes.length) {
+        return;
+      }
+
+      this.pushHistoryEntries?.(changes, label);
+      for (const { item } of changes) {
+        this.markLayoutModified(item);
+      }
+      this.renderBoxes?.();
+      this.refreshToolbar?.();
+    },
+
 layoutAdjustmentFor(item) {
       const target = this.layoutTargetForItem(item);
       if (!item || !target) {
@@ -4726,39 +5212,38 @@ applyLayoutAdjustment(item, adjustment) {
       }
     },
 
+setLayoutDragClass(entries, className, enabled) {
+      for (const entry of entries || []) {
+        const box = this.shadow?.querySelector(`[data-item-id='${CSS.escape(entry.item.id)}']`);
+        box?.classList.toggle(className, enabled);
+      }
+    },
+
 startLayoutDrag(event, item) {
       if (!item || event.button !== 0) {
         return;
       }
 
-      const adjustment = this.layoutAdjustmentFor(item);
-      const target = adjustment?.target;
-      if (!target) {
+      const items = this.prepareLayoutInteractionSelection(item);
+      const entries = this.layoutInteractionEntries(items);
+      if (!entries.length) {
         return;
       }
 
       event.preventDefault();
       event.stopPropagation();
       this.commitActiveText?.();
-      this.selectedId = item.id;
-      this.refreshToolbar?.();
       this.closeOpenMenus?.();
 
-      const startRect = target.getBoundingClientRect();
       this.layoutDrag = {
         item,
-        adjustment,
-        before: null,
+        entries,
         started: false,
         startX: event.clientX,
-        startY: event.clientY,
-        originX: adjustment.x || 0,
-        originY: adjustment.y || 0,
-        startRect
+        startY: event.clientY
       };
 
-      const box = this.shadow?.querySelector(`[data-item-id='${CSS.escape(item.id)}']`);
-      box?.classList.add("is-layout-dragging");
+      this.setLayoutDragClass(entries, "is-layout-dragging", true);
 
       const onMove = (moveEvent) => this.handleLayoutDragMove(moveEvent);
       const onUp = () => endDrag(false);
@@ -4774,7 +5259,7 @@ startLayoutDrag(event, item) {
         document.removeEventListener("pointermove", onMove, true);
         document.removeEventListener("pointerup", onUp, true);
         document.removeEventListener("keydown", onKey, true);
-        box?.classList.remove("is-layout-dragging");
+        this.setLayoutDragClass(entries, "is-layout-dragging", false);
 
         const drag = this.layoutDrag;
         this.layoutDrag = null;
@@ -4784,20 +5269,13 @@ startLayoutDrag(event, item) {
           return;
         }
 
-        if (cancelled && drag.before) {
-          this.restoreState(drag.item, drag.before);
-          this.layoutAdjustments.delete(drag.item.id);
-          this.renderBoxes?.();
-          this.refreshToolbar?.();
+        if (cancelled && drag.started) {
+          this.restoreLayoutBatch(drag.entries);
           return;
         }
 
-        const after = drag.before ? this.captureState(drag.item) : null;
-        if (drag.before && after && !sameState(drag.before, after)) {
-          this.pushHistory(drag.item, drag.before, after, "Move element");
-          this.markLayoutModified(drag.item);
-          this.renderBoxes?.();
-          this.refreshToolbar?.();
+        if (drag.started) {
+          this.finishLayoutBatch(drag.entries, drag.entries.length > 1 ? "Move elements" : "Move element");
         }
       };
 
@@ -4811,37 +5289,33 @@ startLayoutScale(event, item, handle) {
         return;
       }
 
-      const adjustment = this.layoutAdjustmentFor(item);
-      const target = adjustment?.target;
-      if (!target) {
+      const items = this.prepareLayoutInteractionSelection(item);
+      const entries = this.layoutInteractionEntries(items);
+      const primary = entries.find((entry) => entry.item.id === item.id) || entries[0];
+      if (!primary) {
         return;
       }
 
       event.preventDefault();
       event.stopPropagation();
       this.commitActiveText?.();
-      this.selectedId = item.id;
-      this.refreshToolbar?.();
       this.closeOpenMenus?.();
 
-      const rect = target.getBoundingClientRect();
+      const rect = primary.target.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
       const startDistance = Math.max(12, Math.hypot(event.clientX - centerX, event.clientY - centerY));
       this.layoutScaleDrag = {
         item,
-        adjustment,
+        entries,
         handle,
-        before: null,
         started: false,
         centerX,
         centerY,
-        startDistance,
-        originScale: adjustment.scale || 1
+        startDistance
       };
 
-      const box = this.shadow?.querySelector(`[data-item-id='${CSS.escape(item.id)}']`);
-      box?.classList.add("is-layout-scaling");
+      this.setLayoutDragClass(entries, "is-layout-scaling", true);
 
       const onMove = (moveEvent) => this.handleLayoutScaleMove(moveEvent);
       const onUp = () => endScale(false);
@@ -4857,7 +5331,7 @@ startLayoutScale(event, item, handle) {
         document.removeEventListener("pointermove", onMove, true);
         document.removeEventListener("pointerup", onUp, true);
         document.removeEventListener("keydown", onKey, true);
-        box?.classList.remove("is-layout-scaling");
+        this.setLayoutDragClass(entries, "is-layout-scaling", false);
 
         const drag = this.layoutScaleDrag;
         this.layoutScaleDrag = null;
@@ -4867,20 +5341,13 @@ startLayoutScale(event, item, handle) {
           return;
         }
 
-        if (cancelled && drag.before) {
-          this.restoreState(drag.item, drag.before);
-          this.layoutAdjustments.delete(drag.item.id);
-          this.renderBoxes?.();
-          this.refreshToolbar?.();
+        if (cancelled && drag.started) {
+          this.restoreLayoutBatch(drag.entries);
           return;
         }
 
-        const after = drag.before ? this.captureState(drag.item) : null;
-        if (drag.before && after && !sameState(drag.before, after)) {
-          this.pushHistory(drag.item, drag.before, after, "Scale element");
-          this.markLayoutModified(drag.item);
-          this.renderBoxes?.();
-          this.refreshToolbar?.();
+        if (drag.started) {
+          this.finishLayoutBatch(drag.entries, drag.entries.length > 1 ? "Scale elements" : "Scale element");
         }
       };
 
@@ -4905,13 +5372,14 @@ handleLayoutScaleMove(event) {
       event.stopImmediatePropagation();
 
       if (!drag.started) {
-        this.ensureOriginalState(drag.item);
-        drag.before = this.captureState(drag.item);
+        this.captureLayoutBatchBefore(drag.entries);
         drag.started = true;
       }
 
-      drag.adjustment.scale = clamp(drag.originScale * ratio, 0.2, 5);
-      this.applyLayoutAdjustment(drag.item, drag.adjustment);
+      for (const entry of drag.entries) {
+        entry.adjustment.scale = clamp(entry.originScale * ratio, 0.2, 5);
+        this.applyLayoutAdjustment(entry.item, entry.adjustment);
+      }
       this.renderBoxes?.();
     },
 
@@ -4925,41 +5393,37 @@ startLayoutResize(event, item, handle) {
         return;
       }
 
-      const adjustment = this.layoutAdjustmentFor(item);
-      const target = adjustment?.target;
-      if (!target) {
+      const items = this.prepareLayoutInteractionSelection(item);
+      const entries = this.layoutInteractionEntries(items).map((entry) => {
+        const rect = entry.target.getBoundingClientRect();
+        const style = getComputedStyle(entry.target);
+        return {
+          ...entry,
+          originWidth: Number.parseFloat(style.width) || rect.width,
+          originHeight: Number.parseFloat(style.height) || rect.height,
+          scale: clamp(entry.adjustment.scale || 1, 0.2, 5)
+        };
+      });
+      if (!entries.length) {
         return;
       }
 
       event.preventDefault();
       event.stopPropagation();
       this.commitActiveText?.();
-      this.selectedId = item.id;
-      this.refreshToolbar?.();
       this.closeOpenMenus?.();
 
-      const rect = target.getBoundingClientRect();
-      const style = getComputedStyle(target);
-      const originWidth = Number.parseFloat(style.width) || rect.width;
-      const originHeight = Number.parseFloat(style.height) || rect.height;
       this.layoutResizeDrag = {
         item,
-        adjustment,
+        entries,
         handle,
         axes,
-        before: null,
         started: false,
         startX: event.clientX,
-        startY: event.clientY,
-        originX: adjustment.x || 0,
-        originY: adjustment.y || 0,
-        originWidth,
-        originHeight,
-        scale: clamp(adjustment.scale || 1, 0.2, 5)
+        startY: event.clientY
       };
 
-      const box = this.shadow?.querySelector(`[data-item-id='${CSS.escape(item.id)}']`);
-      box?.classList.add("is-layout-resizing");
+      this.setLayoutDragClass(entries, "is-layout-resizing", true);
 
       const onMove = (moveEvent) => this.handleLayoutResizeMove(moveEvent);
       const onUp = () => endResize(false);
@@ -4975,7 +5439,7 @@ startLayoutResize(event, item, handle) {
         document.removeEventListener("pointermove", onMove, true);
         document.removeEventListener("pointerup", onUp, true);
         document.removeEventListener("keydown", onKey, true);
-        box?.classList.remove("is-layout-resizing");
+        this.setLayoutDragClass(entries, "is-layout-resizing", false);
 
         const drag = this.layoutResizeDrag;
         this.layoutResizeDrag = null;
@@ -4985,20 +5449,13 @@ startLayoutResize(event, item, handle) {
           return;
         }
 
-        if (cancelled && drag.before) {
-          this.restoreState(drag.item, drag.before);
-          this.layoutAdjustments.delete(drag.item.id);
-          this.renderBoxes?.();
-          this.refreshToolbar?.();
+        if (cancelled && drag.started) {
+          this.restoreLayoutBatch(drag.entries);
           return;
         }
 
-        const after = drag.before ? this.captureState(drag.item) : null;
-        if (drag.before && after && !sameState(drag.before, after)) {
-          this.pushHistory(drag.item, drag.before, after, "Resize element");
-          this.markLayoutModified(drag.item);
-          this.renderBoxes?.();
-          this.refreshToolbar?.();
+        if (drag.started) {
+          this.finishLayoutBatch(drag.entries, drag.entries.length > 1 ? "Resize elements" : "Resize element");
         }
       };
 
@@ -5072,33 +5529,36 @@ handleLayoutResizeMove(event) {
       event.stopImmediatePropagation();
 
       if (!drag.started) {
-        this.ensureOriginalState(drag.item);
-        drag.before = this.captureState(drag.item);
-        this.ensureLayoutSizeBase(drag.adjustment, drag.axes);
+        this.captureLayoutBatchBefore(drag.entries);
+        for (const entry of drag.entries) {
+          this.ensureLayoutSizeBase(entry.adjustment, drag.axes);
+        }
         drag.started = true;
       }
 
-      const deltaX = rawDeltaX / drag.scale;
-      const deltaY = rawDeltaY / drag.scale;
-      if (drag.axes.width) {
-        const rawWidth = drag.axes.x > 0 ? drag.originWidth + deltaX : drag.originWidth - deltaX;
-        const nextWidth = clamp(rawWidth, 8, 8000);
-        drag.adjustment.width = nextWidth;
-        if (drag.axes.x < 0) {
-          drag.adjustment.x = drag.originX + (drag.originWidth - nextWidth);
+      for (const entry of drag.entries) {
+        const deltaX = rawDeltaX / entry.scale;
+        const deltaY = rawDeltaY / entry.scale;
+        if (drag.axes.width) {
+          const rawWidth = drag.axes.x > 0 ? entry.originWidth + deltaX : entry.originWidth - deltaX;
+          const nextWidth = clamp(rawWidth, 8, 8000);
+          entry.adjustment.width = nextWidth;
+          if (drag.axes.x < 0) {
+            entry.adjustment.x = entry.originX + (entry.originWidth - nextWidth);
+          }
         }
-      }
-      if (drag.axes.height) {
-        const rawHeight = drag.axes.y > 0 ? drag.originHeight + deltaY : drag.originHeight - deltaY;
-        const nextHeight = clamp(rawHeight, 8, 8000);
-        drag.adjustment.height = nextHeight;
-        if (drag.axes.y < 0) {
-          drag.adjustment.y = drag.originY + (drag.originHeight - nextHeight);
+        if (drag.axes.height) {
+          const rawHeight = drag.axes.y > 0 ? entry.originHeight + deltaY : entry.originHeight - deltaY;
+          const nextHeight = clamp(rawHeight, 8, 8000);
+          entry.adjustment.height = nextHeight;
+          if (drag.axes.y < 0) {
+            entry.adjustment.y = entry.originY + (entry.originHeight - nextHeight);
+          }
         }
-      }
 
-      this.applyLayoutSizeAdjustment(drag.item, drag.adjustment);
-      this.applyLayoutAdjustment(drag.item, drag.adjustment);
+        this.applyLayoutSizeAdjustment(entry.item, entry.adjustment);
+        this.applyLayoutAdjustment(entry.item, entry.adjustment);
+      }
       this.renderBoxes?.();
     },
 
@@ -5118,33 +5578,47 @@ handleLayoutDragMove(event) {
       event.stopImmediatePropagation();
 
       if (!drag.started) {
-        this.ensureOriginalState(drag.item);
-        drag.before = this.captureState(drag.item);
+        this.captureLayoutBatchBefore(drag.entries);
         drag.started = true;
       }
 
-      const next = this.clampLayoutOffset(drag, drag.originX + deltaX, drag.originY + deltaY);
-      drag.adjustment.x = next.x;
-      drag.adjustment.y = next.y;
-      this.applyLayoutAdjustment(drag.item, drag.adjustment);
+      const next = this.clampLayoutGroupDelta(drag.entries, deltaX, deltaY);
+      for (const entry of drag.entries) {
+        entry.adjustment.x = entry.originX + next.x;
+        entry.adjustment.y = entry.originY + next.y;
+        this.applyLayoutAdjustment(entry.item, entry.adjustment);
+      }
       this.renderBoxes?.();
     },
 
-clampLayoutOffset(drag, x, y) {
-      const rect = drag.startRect;
-      const deltaX = x - drag.originX;
-      const deltaY = y - drag.originY;
+clampLayoutGroupDelta(entries, deltaX, deltaY) {
+      let minDeltaX = -Infinity;
+      let maxDeltaX = Infinity;
+      let minDeltaY = -Infinity;
+      let maxDeltaY = Infinity;
+      for (const entry of entries) {
+        const bounds = this.layoutDeltaBounds(entry.startRect);
+        minDeltaX = Math.max(minDeltaX, bounds.minDeltaX);
+        maxDeltaX = Math.min(maxDeltaX, bounds.maxDeltaX);
+        minDeltaY = Math.max(minDeltaY, bounds.minDeltaY);
+        maxDeltaY = Math.min(maxDeltaY, bounds.maxDeltaY);
+      }
+      return {
+        x: clamp(deltaX, minDeltaX, maxDeltaX),
+        y: clamp(deltaY, minDeltaY, maxDeltaY)
+      };
+    },
+
+layoutDeltaBounds(rect) {
       const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
       const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
       const minVisibleX = Math.min(32, Math.max(8, rect.width * 0.18));
       const minVisibleY = Math.min(32, Math.max(8, rect.height * 0.18));
-      const minDeltaX = minVisibleX - rect.right;
-      const maxDeltaX = viewportWidth - minVisibleX - rect.left;
-      const minDeltaY = minVisibleY - rect.bottom;
-      const maxDeltaY = viewportHeight - minVisibleY - rect.top;
       return {
-        x: drag.originX + clamp(deltaX, minDeltaX, maxDeltaX),
-        y: drag.originY + clamp(deltaY, minDeltaY, maxDeltaY)
+        minDeltaX: minVisibleX - rect.right,
+        maxDeltaX: viewportWidth - minVisibleX - rect.left,
+        minDeltaY: minVisibleY - rect.bottom,
+        maxDeltaY: viewportHeight - minVisibleY - rect.top
       };
     },
 
@@ -5175,46 +5649,155 @@ handleLayoutKeydown(event) {
     },
 
 moveSelectedLayoutBy(deltaX, deltaY) {
-      const item = this.selectedItem();
-      if (!item) {
+      const items = this.selectedLayoutItemsFor();
+      if (!items.length) {
         return;
       }
 
-      this.withLayoutMutation(item, () => {
-        const adjustment = this.layoutAdjustmentFor(item);
-        if (!adjustment) {
-          return;
+      this.withLayoutMutation(items, () => {
+        for (const item of items) {
+          const adjustment = this.layoutAdjustmentFor(item);
+          if (!adjustment) {
+            continue;
+          }
+          adjustment.x = (adjustment.x || 0) + deltaX;
+          adjustment.y = (adjustment.y || 0) + deltaY;
+          this.applyLayoutAdjustment(item, adjustment);
         }
-        adjustment.x = (adjustment.x || 0) + deltaX;
-        adjustment.y = (adjustment.y || 0) + deltaY;
-        this.applyLayoutAdjustment(item, adjustment);
-      }, "Move element");
+      }, items.length > 1 ? "Move elements" : "Move element");
     },
 
-withLayoutMutation(item, mutate, label) {
-      this.ensureOriginalState(item);
-      const before = this.captureState(item);
+withLayoutMutation(items, mutate, label) {
+      const group = (Array.isArray(items) ? items : [items]).filter(Boolean);
+      if (!group.length) {
+        return;
+      }
+
+      for (const item of group) {
+        this.ensureOriginalState(item);
+      }
+      const before = group.map((item) => ({ item, state: this.captureState(item) }));
       mutate();
-      const after = this.captureState(item);
-      if (!sameState(before, after)) {
-        this.pushHistory(item, before, after, label);
-        this.markLayoutModified(item);
+      const changes = before
+        .map(({ item, state }) => ({
+          item,
+          before: state,
+          after: this.captureState(item)
+        }))
+        .filter((entry) => !sameState(entry.before, entry.after));
+      if (changes.length) {
+        this.pushHistoryEntries?.(changes, label);
+        for (const { item } of changes) {
+          this.markLayoutModified(item);
+        }
         this.renderBoxes?.();
         this.refreshToolbar?.();
       }
     },
 
 resetSelectedLayout() {
-      const item = this.selectedItem();
-      if (!item) {
+      const items = this.selectedLayoutItemsFor();
+      if (!items.length) {
         return;
       }
 
-      this.withLayoutMutation(item, () => {
-        this.clearLayoutAdjustment(item);
+      this.withLayoutMutation(items, () => {
+        for (const item of items) {
+          this.clearLayoutAdjustment(item);
+        }
       }, "Reset layout");
-      this.clearLayoutModifiedIfClean(item);
+      for (const item of items) {
+        this.clearLayoutModifiedIfClean(item);
+      }
       this.toast?.(this.t("layoutReset"));
+    },
+
+alignSelectedLayout(kind) {
+      const items = this.selectedLayoutItemsFor();
+      const primary = this.selectedItem();
+      if (!primary || items.length < 2 || !items.some((item) => item.id === primary.id)) {
+        return;
+      }
+
+      const anchorRect = this.itemBoxElement(primary)?.getBoundingClientRect?.();
+      if (!anchorRect) {
+        return;
+      }
+
+      this.withLayoutMutation(items, () => {
+        for (const item of items) {
+          if (item.id === primary.id) {
+            continue;
+          }
+          const rect = this.itemBoxElement(item)?.getBoundingClientRect?.();
+          const adjustment = this.layoutAdjustmentFor(item);
+          if (!rect || !adjustment) {
+            continue;
+          }
+          const delta = this.layoutAlignmentDelta(kind, anchorRect, rect);
+          adjustment.x = (adjustment.x || 0) + delta.x;
+          adjustment.y = (adjustment.y || 0) + delta.y;
+          this.applyLayoutAdjustment(item, adjustment);
+        }
+      }, "Align elements");
+    },
+
+layoutAlignmentDelta(kind, anchorRect, rect) {
+      switch (kind) {
+        case "left":
+          return { x: anchorRect.left - rect.left, y: 0 };
+        case "h-center":
+          return { x: anchorRect.left + anchorRect.width / 2 - (rect.left + rect.width / 2), y: 0 };
+        case "right":
+          return { x: anchorRect.right - rect.right, y: 0 };
+        case "top":
+          return { x: 0, y: anchorRect.top - rect.top };
+        case "v-center":
+          return { x: 0, y: anchorRect.top + anchorRect.height / 2 - (rect.top + rect.height / 2) };
+        case "bottom":
+          return { x: 0, y: anchorRect.bottom - rect.bottom };
+        default:
+          return { x: 0, y: 0 };
+      }
+    },
+
+matchSelectedLayoutSize(mode) {
+      const items = this.selectedLayoutItemsFor();
+      const primary = this.selectedItem();
+      if (!primary || items.length < 2 || !items.some((item) => item.id === primary.id)) {
+        return;
+      }
+
+      const anchorRect = this.itemBoxElement(primary)?.getBoundingClientRect?.();
+      if (!anchorRect) {
+        return;
+      }
+      const axes = {
+        width: mode === "width" || mode === "both",
+        height: mode === "height" || mode === "both"
+      };
+
+      this.withLayoutMutation(items, () => {
+        for (const item of items) {
+          if (item.id === primary.id) {
+            continue;
+          }
+          const adjustment = this.layoutAdjustmentFor(item);
+          if (!adjustment) {
+            continue;
+          }
+          const scale = clamp(adjustment.scale || 1, 0.2, 5);
+          this.ensureLayoutSizeBase(adjustment, axes);
+          if (axes.width) {
+            adjustment.width = anchorRect.width / scale;
+          }
+          if (axes.height) {
+            adjustment.height = anchorRect.height / scale;
+          }
+          this.applyLayoutSizeAdjustment(item, adjustment);
+          this.applyLayoutAdjustment(item, adjustment);
+        }
+      }, "Match element size");
     },
 
 clearLayoutAdjustment(item) {
@@ -5505,6 +6088,34 @@ pushHistory(item, before, after, label) {
       this.trimHistory();
     },
 
+pushHistoryEntries(entries, label) {
+      const normalized = (entries || []).filter((entry) => entry?.item && entry.before && entry.after);
+      if (!normalized.length) {
+        return;
+      }
+      if (normalized.length === 1) {
+        const [{ item, before, after }] = normalized;
+        this.pushHistory(item, before, after, label);
+        return;
+      }
+
+      this.undoStack.push({
+        label,
+        items: normalized.map(({ item, before, after }) => ({
+          id: item.id,
+          type: item.type,
+          imageMode: item.imageMode,
+          element: item.element,
+          frameElement: item.frameElement,
+          layoutElement: this.layoutTargetForItem?.(item),
+          before,
+          after
+        }))
+      });
+      this.redoStack = [];
+      this.trimHistory();
+    },
+
 trimHistory() {
       if (this.undoStack.length > 80) {
         this.undoStack.splice(0, this.undoStack.length - 80);
@@ -5517,9 +6128,11 @@ undo() {
         this.toast(this.t("nothingUndo"));
         return;
       }
-      const item = this.itemFromHistory(entry);
-      this.restoreState(item, entry.before);
-      this.updateModifiedFromCurrent(item);
+      for (const historyItem of this.historyItemsForEntry(entry)) {
+        const item = this.itemFromHistory(historyItem);
+        this.restoreState(item, historyItem.before);
+        this.updateModifiedFromCurrent(item);
+      }
       this.redoStack.push(entry);
       this.scheduleScan(0);
       this.toast(this.t("undone"));
@@ -5531,12 +6144,18 @@ redo() {
         this.toast(this.t("nothingRedo"));
         return;
       }
-      const item = this.itemFromHistory(entry);
-      this.restoreState(item, entry.after);
-      this.updateModifiedFromCurrent(item);
+      for (const historyItem of this.historyItemsForEntry(entry)) {
+        const item = this.itemFromHistory(historyItem);
+        this.restoreState(item, historyItem.after);
+        this.updateModifiedFromCurrent(item);
+      }
       this.undoStack.push(entry);
       this.scheduleScan(0);
       this.toast(this.t("redone"));
+    },
+
+historyItemsForEntry(entry) {
+      return Array.isArray(entry?.items) ? entry.items : [entry];
     },
 
 itemFromHistory(entry) {
@@ -5551,8 +6170,13 @@ itemFromHistory(entry) {
     },
 
 itemFromHistoryId(id) {
-      const entry = [...this.undoStack, ...this.redoStack].find((item) => item.id === id);
-      return entry ? this.itemFromHistory(entry) : null;
+      for (const entry of [...this.undoStack, ...this.redoStack]) {
+        const historyItem = this.historyItemsForEntry(entry).find((item) => item.id === id);
+        if (historyItem) {
+          return this.itemFromHistory(historyItem);
+        }
+      }
+      return null;
     },
 
 markModified(item) {
@@ -6541,6 +7165,7 @@ escapeDraftCss(value) {
       this.elementIds = new WeakMap();
       this.nextId = 1;
       this.selectedId = null;
+      this.selectedIds = new Set();
       this.editingTextId = null;
       this.textEditRestore = null;
       this.textEditBefore = null;

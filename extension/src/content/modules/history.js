@@ -140,6 +140,34 @@ pushHistory(item, before, after, label) {
       this.trimHistory();
     },
 
+pushHistoryEntries(entries, label) {
+      const normalized = (entries || []).filter((entry) => entry?.item && entry.before && entry.after);
+      if (!normalized.length) {
+        return;
+      }
+      if (normalized.length === 1) {
+        const [{ item, before, after }] = normalized;
+        this.pushHistory(item, before, after, label);
+        return;
+      }
+
+      this.undoStack.push({
+        label,
+        items: normalized.map(({ item, before, after }) => ({
+          id: item.id,
+          type: item.type,
+          imageMode: item.imageMode,
+          element: item.element,
+          frameElement: item.frameElement,
+          layoutElement: this.layoutTargetForItem?.(item),
+          before,
+          after
+        }))
+      });
+      this.redoStack = [];
+      this.trimHistory();
+    },
+
 trimHistory() {
       if (this.undoStack.length > 80) {
         this.undoStack.splice(0, this.undoStack.length - 80);
@@ -152,9 +180,11 @@ undo() {
         this.toast(this.t("nothingUndo"));
         return;
       }
-      const item = this.itemFromHistory(entry);
-      this.restoreState(item, entry.before);
-      this.updateModifiedFromCurrent(item);
+      for (const historyItem of this.historyItemsForEntry(entry)) {
+        const item = this.itemFromHistory(historyItem);
+        this.restoreState(item, historyItem.before);
+        this.updateModifiedFromCurrent(item);
+      }
       this.redoStack.push(entry);
       this.scheduleScan(0);
       this.toast(this.t("undone"));
@@ -166,12 +196,18 @@ redo() {
         this.toast(this.t("nothingRedo"));
         return;
       }
-      const item = this.itemFromHistory(entry);
-      this.restoreState(item, entry.after);
-      this.updateModifiedFromCurrent(item);
+      for (const historyItem of this.historyItemsForEntry(entry)) {
+        const item = this.itemFromHistory(historyItem);
+        this.restoreState(item, historyItem.after);
+        this.updateModifiedFromCurrent(item);
+      }
       this.undoStack.push(entry);
       this.scheduleScan(0);
       this.toast(this.t("redone"));
+    },
+
+historyItemsForEntry(entry) {
+      return Array.isArray(entry?.items) ? entry.items : [entry];
     },
 
 itemFromHistory(entry) {
@@ -186,8 +222,13 @@ itemFromHistory(entry) {
     },
 
 itemFromHistoryId(id) {
-      const entry = [...this.undoStack, ...this.redoStack].find((item) => item.id === id);
-      return entry ? this.itemFromHistory(entry) : null;
+      for (const entry of [...this.undoStack, ...this.redoStack]) {
+        const historyItem = this.historyItemsForEntry(entry).find((item) => item.id === id);
+        if (historyItem) {
+          return this.itemFromHistory(historyItem);
+        }
+      }
+      return null;
     },
 
 markModified(item) {

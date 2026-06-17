@@ -298,6 +298,100 @@ try {
     });
   });
 
+  const layoutMultiSelectState = await page.evaluate(() => {
+    const editor = window.__htmlSlideMenderBootstrap.editor;
+    editor.setEditorMode("layout");
+    editor.scan();
+
+    function rectFor(id) {
+      const item = editor.items.get(id);
+      const rect = editor.itemBoxElement(item).getBoundingClientRect();
+      return {
+        left: Math.round(rect.left),
+        top: Math.round(rect.top),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height)
+      };
+    }
+
+    const candidates = Array.from(editor.items.values())
+      .map((item) => ({ id: item.id, rect: rectFor(item.id) }))
+      .filter(({ rect }) => rect.width >= 40 && rect.height >= 20);
+    let pair = null;
+    for (let index = 0; index < candidates.length && !pair; index += 1) {
+      for (let nextIndex = index + 1; nextIndex < candidates.length; nextIndex += 1) {
+        if (Math.abs(candidates[index].rect.top - candidates[nextIndex].rect.top) >= 20) {
+          pair = [candidates[index].id, candidates[nextIndex].id];
+          break;
+        }
+      }
+    }
+    if (!pair) {
+      return { ok: false, reason: "No suitable layout pair", candidates };
+    }
+
+    editor.selectItem(pair[0]);
+    editor.selectItem(pair[1], { toggle: true });
+    const selectedAfterToggle = editor.selectedIds.size;
+    const beforeMove = pair.map(rectFor);
+    editor.moveSelectedLayoutBy(24, 16);
+    const afterMove = pair.map(rectFor);
+    editor.undo();
+    const afterMoveUndo = pair.map(rectFor);
+
+    editor.selectItem(pair[0]);
+    editor.selectItem(pair[1], { toggle: true });
+    const primaryBeforeAlign = rectFor(pair[1]);
+    editor.alignSelectedLayout("top");
+    const aligned = pair.map(rectFor);
+    editor.undo();
+    const afterAlignUndo = pair.map(rectFor);
+
+    editor.clearSelection();
+    editor.setEditorMode("content");
+    editor.scan();
+
+    return {
+      ok: true,
+      pair,
+      selectedAfterToggle,
+      beforeMove,
+      afterMove,
+      afterMoveUndo,
+      primaryBeforeAlign,
+      aligned,
+      afterAlignUndo,
+      selectedAfterCleanup: editor.selectedIds.size,
+      modeAfterCleanup: editor.editMode
+    };
+  });
+
+  if (!layoutMultiSelectState.ok) {
+    throw new Error(`Could not set up layout multi-select smoke test: ${JSON.stringify(layoutMultiSelectState)}`);
+  }
+  if (layoutMultiSelectState.selectedAfterToggle !== 2) {
+    throw new Error(`Layout multi-select did not retain two selected items: ${JSON.stringify(layoutMultiSelectState)}`);
+  }
+  for (const [index, before] of layoutMultiSelectState.beforeMove.entries()) {
+    const after = layoutMultiSelectState.afterMove[index];
+    const undone = layoutMultiSelectState.afterMoveUndo[index];
+    if (after.left - before.left !== 24 || after.top - before.top !== 16) {
+      throw new Error(`Layout group move did not apply the same delta: ${JSON.stringify(layoutMultiSelectState)}`);
+    }
+    if (Math.abs(undone.left - before.left) > 1 || Math.abs(undone.top - before.top) > 1) {
+      throw new Error(`Layout group move did not undo as one operation: ${JSON.stringify(layoutMultiSelectState)}`);
+    }
+  }
+  if (Math.abs(layoutMultiSelectState.aligned[0].top - layoutMultiSelectState.primaryBeforeAlign.top) > 1) {
+    throw new Error(`Layout group top alignment did not use the primary selection: ${JSON.stringify(layoutMultiSelectState)}`);
+  }
+  if (Math.abs(layoutMultiSelectState.afterAlignUndo[0].top - layoutMultiSelectState.afterMoveUndo[0].top) > 1) {
+    throw new Error(`Layout group alignment did not undo cleanly: ${JSON.stringify(layoutMultiSelectState)}`);
+  }
+  if (layoutMultiSelectState.selectedAfterCleanup !== 0 || layoutMultiSelectState.modeAfterCleanup !== "content") {
+    throw new Error(`Layout multi-select cleanup left stale editor state: ${JSON.stringify(layoutMultiSelectState)}`);
+  }
+
   const textPoint = await page.evaluate(() => {
     const rect = document.querySelector("p").getBoundingClientRect();
     return {

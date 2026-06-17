@@ -11,6 +11,7 @@ HTML Slide Mender 让 **HTML PPT / AI 生成的网页演示稿** 可以在浏览
 - 位置微调：移动标题、图片、卡片和块级元素。
 - 移动缩放：用 `transform: scale(...)` 做安全视觉缩放。
 - 改宽高：写入真实 `width` / `height`，支持只改宽、只改高或自由拉伸。
+- 临时多选：`Shift` / `Cmd` / `Ctrl` 点选多个模块后，可一起移动、缩放、改宽高、对齐或统一尺寸。
 - 干净导出：移除编辑器 UI 和注入脚本。
 
 ## 使用方式
@@ -67,6 +68,12 @@ node skills/html-slide-mender/scripts/inject-html-editor.mjs /absolute/path/inpu
 5. 打开 HTML PPT 页面，点击扩展图标。
 
 ## 版本说明
+
+### 0.1.10
+
+- “位置微调”支持临时多选，不保存绑定关系。
+- 多选模块可一起移动、缩放、改宽高、恢复、对齐和统一宽高。
+- 多选版面操作会作为一次历史记录撤销 / 重做。
 
 ### 0.1.8
 
@@ -135,6 +142,7 @@ It is designed for the final editing pass after an AI has generated an HTML deck
 - Layout adjustment: move titles, images, cards, and block elements.
 - Move/scale: safe visual scaling with `transform: scale(...)`.
 - Resize: real `width` / `height` edits, including width-only, height-only, and freeform stretch changes.
+- Temporary multi-select: `Shift` / `Cmd` / `Ctrl` click several modules to move, scale, resize, align, or match sizes together.
 - Clean export: removes editor UI and injected runtime scripts.
 
 ## Usage
@@ -191,6 +199,12 @@ Load the extension locally:
 5. Open an HTML deck and click the extension action.
 
 ## Release Notes
+
+### 0.1.10
+
+- Added temporary multi-select in layout mode without saving persistent groups.
+- Multi-selected modules can move, scale, resize, reset, align, and match width/height together.
+- Multi-select layout operations undo / redo as one history step.
 
 ### 0.1.8
 
