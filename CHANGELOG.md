@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.15
+
+- Refined the marketplace-facing title and summary wording for common HTML/PPT editing requests.
+- Kept the same local/saved HTML scope and safety boundaries as 0.1.14.
+
 ## 0.1.14
 
 - Improved Chinese search coverage for terms such as `HTML 编辑`, `PPT 编辑`, `HTML PPT 编辑`, `网页编辑`, `演示稿编辑`, and `幻灯片编辑`.
