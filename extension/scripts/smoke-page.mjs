@@ -40,6 +40,58 @@ const contentScriptSources = await Promise.all(
 );
 const errors = [];
 
+async function editableBoxPoint(page, selector) {
+  return page.evaluate((targetSelector) => {
+    const editor = window.__htmlSlideMenderBootstrap.editor;
+    editor.setEditorMode("content");
+    editor.scan();
+    const element = document.querySelector(targetSelector);
+    const item = Array.from(editor.items.values()).find((candidate) => candidate.element === element);
+    const root = document.querySelector("#html-slide-mender-root");
+    const shadow = root?.shadowRoot;
+    const box = shadow?.querySelector(`.box[data-item-id='${CSS.escape(item?.id || "")}']`);
+    if (!element || !item || !shadow || !box) {
+      throw new Error(`Could not locate editable overlay box for ${targetSelector}`);
+    }
+
+    const rect = box.getBoundingClientRect();
+    const samplePoint = (xRatio, yRatio) => ({
+      x: rect.left + rect.width * xRatio,
+      y: rect.top + rect.height * yRatio
+    });
+    const candidates = [
+      samplePoint(0.5, 0.5),
+      samplePoint(0.08, 0.5),
+      samplePoint(0.92, 0.5),
+      samplePoint(0.5, 0.18),
+      samplePoint(0.5, 0.82),
+      samplePoint(0.2, 0.5),
+      samplePoint(0.8, 0.5),
+      samplePoint(0.5, 0.35),
+      samplePoint(0.5, 0.65)
+    ].filter((point) => (
+      point.x > rect.left + 1 &&
+      point.x < rect.right - 1 &&
+      point.y > rect.top + 1 &&
+      point.y < rect.bottom - 1
+    ));
+
+    const topBoxAt = (point) => {
+      const elements = typeof shadow.elementsFromPoint === "function"
+        ? shadow.elementsFromPoint(point.x, point.y)
+        : [];
+      return elements
+        .map((candidate) => candidate.closest?.(".box[data-item-id]"))
+        .find(Boolean);
+    };
+
+    return candidates.find((point) => topBoxAt(point)?.dataset.itemId === item.id) || {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2
+    };
+  }, selector);
+}
+
 const executablePath = [
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
   "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
@@ -404,14 +456,7 @@ try {
     throw new Error(`Layout multi-select cleanup left stale editor state: ${JSON.stringify(layoutMultiSelectState)}`);
   }
 
-  const textPoint = await page.evaluate(() => {
-    const rect = document.querySelector("p").getBoundingClientRect();
-    return {
-      x: rect.left + rect.width / 2,
-      y: rect.top + rect.height / 2
-    };
-  });
-
+  const textPoint = await editableBoxPoint(page, "p");
   await page.mouse.click(textPoint.x, textPoint.y);
   await page.waitForFunction(() => document.querySelector("p")?.isContentEditable);
   await page.keyboard.press("Control+A");
@@ -732,7 +777,8 @@ try {
     throw new Error(`Remembered colors leaked into another text box: ${JSON.stringify(colorDidNotLeak)}`);
   }
 
-  await page.mouse.click(textPoint.x, textPoint.y);
+  const refreshedTextPoint = await editableBoxPoint(page, "p");
+  await page.mouse.click(refreshedTextPoint.x, refreshedTextPoint.y);
   await page.waitForFunction(() => document.querySelector("p")?.isContentEditable);
   await page.keyboard.press("Control+A");
 
@@ -1018,6 +1064,7 @@ try {
     return {
       itemId: item.id,
       labelCursor: getComputedStyle(label).cursor,
+      boxCursor: getComputedStyle(box).cursor,
       edgePoint: { x: rect.left + Math.min(24, rect.width / 3), y: rect.top + 2 }
     };
   });
@@ -1028,12 +1075,11 @@ try {
     const label = box.querySelector("[data-direct-move-handle]");
     return {
       boxCursor: getComputedStyle(box).cursor,
-      labelCursor: getComputedStyle(label).cursor,
-      moveHit: box.classList.contains("is-direct-move-hit")
+      labelCursor: getComputedStyle(label).cursor
     };
   }, textMoveCursorProbe.itemId);
-  if (textMoveCursorState.boxCursor !== "grab" || textMoveCursorState.labelCursor !== "grab" || !textMoveCursorState.moveHit) {
-    throw new Error(`Selected text did not show a movable cursor on its draggable border: ${JSON.stringify({ before: textMoveCursorProbe, after: textMoveCursorState })}`);
+  if (textMoveCursorProbe.boxCursor !== "move" || textMoveCursorState.boxCursor !== "move" || textMoveCursorState.labelCursor !== "move") {
+    throw new Error(`Selected text did not keep a stable move cursor: ${JSON.stringify({ before: textMoveCursorProbe, after: textMoveCursorState })}`);
   }
 
   const imagePoint = await page.evaluate(() => {
@@ -1100,7 +1146,7 @@ try {
     return {
       id: item.id,
       parentStyle: frame.getAttribute("style"),
-      point: { x: box.left + box.width / 2, y: box.top + box.height / 2 },
+      point: { x: box.left + Math.min(24, box.width / 3), y: box.top + 2 },
       box: { left: Math.round(box.left), top: Math.round(box.top), width: Math.round(box.width), height: Math.round(box.height) }
     };
   });
@@ -1149,7 +1195,7 @@ try {
   const firstSequentialMove = await page.evaluate((itemId) => {
     const box = document.querySelector("#html-slide-mender-root").shadowRoot.querySelector(`.box[data-item-id='${CSS.escape(itemId)}']`).getBoundingClientRect();
     return {
-      point: { x: box.left + box.width / 2, y: box.top + box.height / 2 },
+      point: { x: box.left + Math.min(24, box.width / 3), y: box.top + 2 },
       box: { left: Math.round(box.left), top: Math.round(box.top), width: Math.round(box.width), height: Math.round(box.height) }
     };
   }, firstImageDirectBefore.id);

@@ -132,10 +132,12 @@ serializeSourceBasedHtml(sourceHtml) {
 
 createSourceExportPatches(sourceDocument) {
       const patches = this.createInsertedElementPatches(sourceDocument);
+      const patchedElements = new Set();
       for (const element of this.exportTextElements()) {
         const patch = this.createSourceExportPatch(element, "text", sourceDocument);
         if (patch) {
           patches.push(patch);
+          patchedElements.add(element);
         }
       }
 
@@ -143,6 +145,7 @@ createSourceExportPatches(sourceDocument) {
         const patch = this.createSourceExportPatch(image, "img", sourceDocument);
         if (patch) {
           patches.push(patch);
+          patchedElements.add(image);
         }
       }
 
@@ -150,10 +153,14 @@ createSourceExportPatches(sourceDocument) {
         const patch = this.createSourceExportPatch(element, "background", sourceDocument);
         if (patch) {
           patches.push(patch);
+          patchedElements.add(element);
         }
       }
 
       for (const element of this.exportLayoutElements()) {
+        if (patchedElements.has(element)) {
+          continue;
+        }
         const patch = this.createSourceExportPatch(element, "layout", sourceDocument);
         if (patch) {
           patches.push(patch);
@@ -768,8 +775,9 @@ isExportTextElement(element) {
         return false;
       }
       const isAddedText = element.dataset.hsmAdded === "text";
+      const isExplicitText = element.hasAttribute("data-editable") || isAddedText || element.isContentEditable;
       const text = normalizeText(element.innerText || element.textContent || "");
-      if (!isAddedText && text.length < 2) {
+      if (!isExplicitText && text.length < 2) {
         return false;
       }
       const tag = element.tagName.toLowerCase();

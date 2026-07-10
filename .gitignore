@@ -7,6 +7,7 @@ skills-lock.json
 *.log
 *.tmp
 release/
+cases/
 
 # Generated editable/demo outputs
 examples/*.editable.html

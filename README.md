@@ -9,7 +9,9 @@ HTML Mender 让 **HTML PPT / AI 生成的网页演示稿** 可以在浏览器里
 - 编辑文字：字号、颜色、加粗、对齐、行高。
 - 新增内容：直接插入新的文字块和图片。
 - 替换图片：填充、适应、拉伸、缩放；默认拖动移动图片框，按住 Option/Alt 可调整图片内部位置。
-- 边框操作：选中文字或图片后，直接拖动边框/标签移动，拖动边缘或角点改大小。
+- 选中和编辑：单击选中，拖动选框/标签移动，双击文字或按 `Enter` / `F2` 进入文字编辑。
+- 边框改大小：选中文字或图片后，拖动边缘或角点改大小。
+- 动画内容识别：点击展开或动画展示后，会重新识别新出现的文字、图片、白底框和 icon。
 - 临时多选：`Shift` / `Cmd` / `Ctrl` 点选多个文字/图片/模块后，可一起移动、对齐或统一尺寸。
 - 版面调整：仍支持安全缩放、真实宽高调整和恢复，用于更复杂的标题、卡片和块级元素。
 - 干净导出：移除编辑器 UI 和注入脚本。
@@ -70,6 +72,16 @@ node skills/html-slide-mender/scripts/inject-html-editor.mjs /absolute/path/inpu
 5. 打开 HTML PPT 页面，点击扩展图标。
 
 ## 版本说明
+
+### 0.1.17
+
+- 稳定选中、移动、改大小和文字编辑：单击选中，选框/标签移动，拖点改大小，双击或 `Enter` / `F2` 编辑文字。
+- 减少移动判定和文字/图片编辑之间的冲突，密集页面里更容易点中内容。
+- 支持动画展开后的延迟重扫，隐藏后出现的文字、图片、白底框和 icon 也能重新识别。
+
+### 0.1.16
+
+- 收紧技能触发描述，明确只面向本地或已保存的 HTML 文件。
 
 ### 0.1.14
 
@@ -160,7 +172,9 @@ It is designed for the final editing pass after an AI has generated an HTML deck
 - Text editing: font size, color, bold, alignment, and line height.
 - Insert content: add new text blocks and images directly.
 - Image replacement: cover, contain, fill, zoom; default dragging moves the image frame, while Option/Alt drag adjusts image content inside the frame.
-- Border handles: select text or images, then drag the border/label to move and drag edges or corners to resize.
+- Selection and editing: single click selects, selected border/label drags move, and double-click or `Enter` / `F2` enters text editing.
+- Resize handles: select text or images, then drag edges or corners to resize.
+- Revealed content detection: after click-triggered or animated reveals, newly visible text, images, white panels, and icons can be rescanned.
 - Temporary multi-select: `Shift` / `Cmd` / `Ctrl` click several text/image/module boxes to move, align, or match sizes together.
 - Advanced layout adjustment: safe scale, real width/height resizing, and reset tools remain available for complex titles, cards, and block elements.
 - Clean export: removes editor UI and injected runtime scripts.
@@ -221,6 +235,16 @@ Load the extension locally:
 5. Open an HTML deck and click the extension action.
 
 ## Release Notes
+
+### 0.1.17
+
+- Stabilized selection, movement, resizing, and text editing: single click selects, selected borders/labels move, handles resize, and double-click or `Enter` / `F2` edits text.
+- Reduced move-hit conflicts so dense text and image areas are easier to click and edit.
+- Added delayed rescans for animated reveals so newly visible text, images, white panels, and icons can be selected.
+
+### 0.1.16
+
+- Tightened the skill trigger wording around local or saved HTML files.
 
 ### 0.1.14
 

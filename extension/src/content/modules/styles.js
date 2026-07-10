@@ -770,33 +770,22 @@
       box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.14);
     }
 
-    .box-image.is-selected {
-      cursor: grab;
-    }
-
     .box.is-direct-layout {
       border-style: solid;
-    }
-
-    .box-text.is-direct-layout {
-      cursor: text;
-    }
-
-    .box-text.is-direct-layout.is-direct-move-hit {
-      cursor: grab;
+      cursor: move;
     }
 
     .box.is-direct-layout .box-label {
-      cursor: grab;
+      cursor: move;
     }
 
     .box.is-direct-layout.is-layout-dragging,
     .box.is-direct-layout.is-layout-dragging .box-label {
-      cursor: grabbing;
+      cursor: move;
     }
 
     .box-image.is-dragging {
-      cursor: grabbing;
+      cursor: move;
       border-style: solid;
       box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
     }
@@ -814,7 +803,7 @@
     .box-layout {
       border-color: #7c3aed;
       background: rgba(124, 58, 237, 0.045);
-      cursor: grab;
+      cursor: move;
     }
 
     .box-layout.is-layout-size-mode {
@@ -839,7 +828,7 @@
 	    }
 
     .box-layout.is-layout-dragging {
-      cursor: grabbing;
+      cursor: move;
       border-style: solid;
       box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.24);
     }
@@ -862,6 +851,7 @@
       background: #7c3aed;
       box-shadow: 0 1px 6px rgba(15, 23, 42, 0.26);
       pointer-events: auto;
+      z-index: 3;
     }
 
     .layout-handle:hover {
@@ -963,6 +953,22 @@
       font-weight: 750;
       letter-spacing: 0.02em;
       white-space: nowrap;
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 120ms ease, transform 120ms ease;
+    }
+
+    .layer.is-dense .box:not(:hover):not(.is-selected):not(.is-editing) .box-label {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(3px);
+    }
+
+    .layer.is-dense .box:hover .box-label,
+    .layer.is-dense .box.is-selected .box-label,
+    .layer.is-dense .box.is-editing .box-label {
+      opacity: 1;
+      transform: translateY(0);
     }
 
     .box-image .box-label {

@@ -18,7 +18,9 @@ For local `file://` decks, enable `Allow access to file URLs` on the extension d
 - Visible text and image detection.
 - Text editing: font size, color, bold, alignment, line height.
 - Image replacement: fit, zoom, drag, reset.
-- Layout mode: move elements, safe visual scale, real width/height resize, and temporary multi-select alignment/sizing.
+- Stable selection model: single click selects, selected borders/labels move, handles resize, and double-click / Enter / F2 edits text.
+- Revealed-content rescans for click-triggered or animated text/images.
+- Layout tools: safe visual scale, real width/height resize, and temporary multi-select alignment/sizing.
 - Basic HTML export for generated slide files; full single-file export for bundled webpage edits.
 
 ## Development

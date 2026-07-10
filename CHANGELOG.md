@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.17
+
+- Stabilized the editing model: single click selects, selected borders/labels move, resize handles resize, and double-click / Enter / F2 enters text editing.
+- Reduced move-hit conflicts so dense text and image areas stay easier to edit while selected elements remain draggable.
+- Added delayed rescans for revealed or animated content and improved selection of image cards, white panels, and icons.
+
+## 0.1.16
+
+- Tightened the skill trigger wording around local or saved HTML files.
+
 ## 0.1.15
 
 - Refined the marketplace-facing title and summary wording for common HTML/PPT editing requests.

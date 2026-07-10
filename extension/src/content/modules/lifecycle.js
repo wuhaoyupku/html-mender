@@ -181,6 +181,11 @@ installEvents() {
       this.addEvent(window, "keyup", () => this.scheduleScan(120), { passive: true });
       this.addEvent(window, "wheel", () => this.scheduleScan(180), { passive: true });
       this.addEvent(window, "touchend", () => this.scheduleScan(180), { passive: true });
+      this.addEvent(document, "click", () => {
+        this.scheduleScan(80);
+        this.scheduleScan(360);
+        this.scheduleScan(720);
+      }, true);
       this.addEvent(document, "transitionend", () => this.scheduleScan(80), true);
       this.addEvent(document, "animationend", () => this.scheduleScan(80), true);
       this.addEvent(document, "pointerdown", (event) => this.handleDocumentPointerDown(event), true);
@@ -541,6 +546,16 @@ summaryText() {
 
       if (this.host && event.composedPath?.().includes(this.host)) {
         return;
+      }
+
+      if (!this.editingTextId && !this.isLayoutMode?.() && (event.key === "Enter" || event.key === "F2")) {
+        const item = this.selectedItem?.();
+        if (item?.type === "text") {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          this.enterTextEdit?.(item);
+          return;
+        }
       }
 
       if (this.handleLayoutKeydown?.(event)) {

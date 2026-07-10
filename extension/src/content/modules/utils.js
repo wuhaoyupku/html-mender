@@ -12,6 +12,29 @@
       Number(style.opacity || "1") > 0.02;
   }
 
+  function isElementRendered(element) {
+    let node = element;
+    let effectiveOpacity = 1;
+    while (node && node.nodeType === Node.ELEMENT_NODE) {
+      if (node.hidden) {
+        return false;
+      }
+      const style = getComputedStyle(node);
+      if (style.display === "none" || style.visibility === "hidden") {
+        return false;
+      }
+      const opacity = Number(style.opacity || "1");
+      if (Number.isFinite(opacity)) {
+        effectiveOpacity *= opacity;
+        if (effectiveOpacity <= 0.02) {
+          return false;
+        }
+      }
+      node = node.parentElement;
+    }
+    return true;
+  }
+
   function isVisibleRect(rect, minWidth, minHeight) {
     return rect.width >= minWidth &&
       rect.height >= minHeight &&
@@ -110,6 +133,7 @@
   ns.utils = {
     normalizeText,
     isRendered,
+    isElementRendered,
     isVisibleRect,
     intersectsViewport,
     hasTextOverflow,

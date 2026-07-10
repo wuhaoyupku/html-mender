@@ -37,6 +37,7 @@
     rangeBelongsTo
   } = ns.selection;
   const { EDITOR_CSS } = ns.ui;
+  const DENSE_BOX_LABEL_THRESHOLD = 36;
 
   ns.mixins.ui = {
 installUi() {
@@ -290,8 +291,18 @@ bindUiEvents() {
           return;
         }
         this.selectItem(item.id);
-        if (item.type === "text") {
-          this.enterTextEdit(item, event);
+      });
+
+      this.layer.addEventListener("dblclick", (event) => {
+        const box = this.boxFromOverlayEvent?.(event);
+        if (!box || this.isLayoutMode?.()) {
+          return;
+        }
+        const item = this.items.get(box.dataset.itemId);
+        if (item?.type === "text") {
+          event.preventDefault();
+          event.stopPropagation();
+          this.enterSelectedTextEdit(item, event);
         }
       });
 
@@ -344,33 +355,58 @@ bindUiEvents() {
           return;
         }
 
-        if (this.isDirectMoveHit?.(event, box)) {
-          this.startLayoutDrag?.(event, item);
+        if (this.isTextDoubleClickIntent?.(item, event)) {
+          event.preventDefault();
+          event.stopPropagation();
+          this.enterSelectedTextEdit(item, event);
           return;
         }
 
-        if (item.type === "image") {
-          if (event.altKey) {
-            event.preventDefault();
-            event.stopPropagation();
-            this.closeOpenMenus();
-            this.selectItem(item.id);
-            this.startImageContentDrag(event, item);
-            return;
-          }
-          this.startLayoutDrag?.(event, item);
+        if (item.type === "image" && event.altKey) {
+          event.preventDefault();
+          event.stopPropagation();
+          this.closeOpenMenus();
+          this.selectItem(item.id);
+          this.startImageContentDrag(event, item);
+          return;
         }
-      });
 
-      this.layer.addEventListener("pointermove", (event) => {
-        this.refreshDirectMoveCursor?.(event);
-      });
-
-      this.layer.addEventListener("pointerleave", () => {
-        this.clearDirectMoveCursor?.();
+        this.startLayoutDrag?.(event, item);
       });
 
       this.fileInput.addEventListener("change", () => this.handleImageFile());
+    },
+
+enterSelectedTextEdit(item, event) {
+      if (!item || item.type !== "text") {
+        return;
+      }
+      this.closeOpenMenus();
+      this.selectItem(item.id);
+      this.enterTextEdit(item, event);
+    },
+
+isTextDoubleClickIntent(item, event) {
+      if (!item || item.type !== "text" || event.button !== 0) {
+        return false;
+      }
+      const now = performance.now();
+      const previous = this.lastTextPointerClick;
+      const current = {
+        id: item.id,
+        time: now,
+        x: event.clientX,
+        y: event.clientY
+      };
+      this.lastTextPointerClick = current;
+      if (!previous || previous.id !== item.id || now - previous.time > 520) {
+        return false;
+      }
+      const doubleClick = Math.hypot(event.clientX - previous.x, event.clientY - previous.y) <= 12;
+      if (doubleClick) {
+        this.lastTextPointerClick = null;
+      }
+      return doubleClick;
     },
 
 boxFromOverlayEvent(event) {
@@ -397,55 +433,6 @@ boxFromOverlayEvent(event) {
 directResizePreservesAspect(handle) {
       const name = String(handle || "");
       return name.includes("n") || name.includes("s") ? (name.includes("e") || name.includes("w")) : false;
-    },
-
-    refreshDirectMoveCursor(event) {
-      const box = this.boxFromOverlayEvent?.(event);
-      const item = box ? this.items.get(box.dataset.itemId) : null;
-      this.clearDirectMoveCursor?.(box);
-      if (
-        !box ||
-        !item ||
-        this.isLayoutMode?.() ||
-        item.type !== "text" ||
-        !box.classList.contains("is-direct-layout") ||
-        !this.isDirectMoveZone?.(event, box)
-      ) {
-        box?.classList.remove("is-direct-move-hit");
-        return false;
-      }
-      box.classList.add("is-direct-move-hit");
-      return true;
-    },
-
-    clearDirectMoveCursor(except = null) {
-      for (const box of this.shadow?.querySelectorAll(".box.is-direct-move-hit") || []) {
-        if (box !== except) {
-          box.classList.remove("is-direct-move-hit");
-        }
-      }
-    },
-
-    isDirectMoveHit(event, box) {
-      if (event.button !== 0) {
-        return false;
-      }
-      return this.isDirectMoveZone(event, box);
-    },
-
-    isDirectMoveZone(event, box) {
-      if (event.target.closest("[data-direct-move-handle]")) {
-        return true;
-      }
-      const rect = box?.getBoundingClientRect?.();
-      if (!rect) {
-        return false;
-      }
-      const inset = 9;
-      return event.clientX - rect.left <= inset ||
-        rect.right - event.clientX <= inset ||
-        event.clientY - rect.top <= inset ||
-        rect.bottom - event.clientY <= inset;
     },
 
 populateFonts() {
@@ -483,6 +470,7 @@ renderBoxes() {
       }
 
       if (!this.showBoxes) {
+        this.layer.classList.remove("is-dense");
         this.layer.innerHTML = "";
         return;
       }
@@ -508,6 +496,7 @@ renderBoxes() {
         return typeRank(a) - typeRank(b);
       });
 
+      this.layer.classList.toggle("is-dense", entries.length > DENSE_BOX_LABEL_THRESHOLD);
       const boxes = entries.map(({ item, rect, selected, editing, overflow }) => (
         this.boxTemplate(item, rect, selected, editing, overflow)
       ));

@@ -14,7 +14,7 @@
   } = ns.constants;
   const {
     normalizeText,
-    isRendered,
+    isElementRendered,
     isVisibleRect,
     intersectsViewport,
     hasTextOverflow,
@@ -41,13 +41,21 @@
 findTextItems() {
       const raw = Array.from(document.querySelectorAll(TEXT_SELECTOR))
         .filter((element) => this.isTextCandidate(element));
-      const candidates = this.filterNestedText(raw);
+      const explicit = raw.filter((element) => this.isExplicitTextCandidate(element));
+      const source = this.shouldPreferExplicitTextCandidates(raw, explicit)
+        ? this.mergeTextCandidates(explicit, raw.filter((element) => this.isRevealedTextCandidate(element)))
+        : raw;
+      const candidates = this.filterNestedText(source);
 
       return candidates.map((element) => ({
         id: this.idFor(element, "text"),
         type: "text",
         element
       }));
+    },
+
+mergeTextCandidates(primary, extra) {
+      return Array.from(new Set([...(primary || []), ...(extra || [])]));
     },
 
 findImageItems() {
@@ -116,8 +124,9 @@ isTextCandidate(element) {
       }
 
       const isAddedText = element.dataset.hsmAdded === "text";
+      const isExplicitText = this.isExplicitTextCandidate(element);
       const text = normalizeText(element.innerText || element.textContent || "");
-      if (!isAddedText && text.length < 2) {
+      if (!isExplicitText && text.length < 2) {
         return false;
       }
 
@@ -126,8 +135,7 @@ isTextCandidate(element) {
         return false;
       }
 
-      const style = getComputedStyle(element);
-      if (!isRendered(style)) {
+      if (!isElementRendered(element)) {
         return false;
       }
 
@@ -142,6 +150,49 @@ isTextCandidate(element) {
       }
 
       return true;
+    },
+
+isExplicitTextCandidate(element) {
+      return element?.hasAttribute?.("data-editable") ||
+        element?.dataset?.hsmAdded === "text" ||
+        element?.isContentEditable;
+    },
+
+isRevealedTextCandidate(element) {
+      if (!element || this.isExplicitTextCandidate(element)) {
+        return false;
+      }
+      const text = normalizeText(element.innerText || element.textContent || "");
+      if (text.length < 4) {
+        return false;
+      }
+      const expandableAncestor = element.closest?.(
+        ".expanded,[open],[aria-expanded='true'],[data-expanded='true'],[data-open='true'],.is-expanded,.is-open"
+      );
+      if (!expandableAncestor) {
+        return false;
+      }
+      if (element.querySelector(BLOCK_TEXT_SELECTOR)) {
+        return false;
+      }
+      const rect = element.getBoundingClientRect();
+      return isVisibleRect(rect, 8, 8) && intersectsViewport(rect);
+    },
+
+shouldPreferExplicitTextCandidates(raw, explicit) {
+      if (!explicit.length || explicit.length < 3) {
+        return false;
+      }
+
+      const explicitTextLength = explicit.reduce((total, element) => (
+        total + normalizeText(element.innerText || element.textContent || "").length
+      ), 0);
+      const rawTextLength = raw.reduce((total, element) => (
+        total + normalizeText(element.innerText || element.textContent || "").length
+      ), 0);
+
+      return explicit.length >= raw.length * 0.35 ||
+        explicitTextLength >= rawTextLength * 0.45;
     },
 
 filterNestedText(elements) {
@@ -169,8 +220,7 @@ isImageCandidate(element) {
         return false;
       }
 
-      const style = getComputedStyle(element);
-      return isRendered(style);
+      return isElementRendered(element);
     },
 
 isBackgroundImageCandidate(element) {
@@ -184,7 +234,7 @@ isBackgroundImageCandidate(element) {
       }
 
       const style = getComputedStyle(element);
-      if (!isRendered(style) || style.backgroundImage === "none") {
+      if (!isElementRendered(element) || style.backgroundImage === "none") {
         return false;
       }
 

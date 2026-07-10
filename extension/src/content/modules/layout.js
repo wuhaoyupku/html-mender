@@ -3,7 +3,7 @@
   ns.mixins = ns.mixins || {};
   const { ROOT_ID, EXCLUDED_SELECTOR } = ns.constants;
   const {
-    isRendered,
+    isElementRendered,
     isVisibleRect,
     intersectsViewport,
     round,
@@ -20,7 +20,8 @@
     height: "--hsm-layout-height",
     baseTransform: "--hsm-layout-base-transform",
     baseWidth: "--hsm-layout-base-width",
-    baseHeight: "--hsm-layout-base-height"
+    baseHeight: "--hsm-layout-base-height",
+    baseDisplay: "--hsm-layout-base-display"
   };
   const IMAGE_FRAME_SELECTOR = "[data-hsm-image-frame]";
   const IMAGE_FRAME_CUSTOM_PROPS = {
@@ -34,10 +35,20 @@
     "[data-card]",
     "[data-panel]",
     "[data-shape]",
+    "[data-icon]",
+    "[data-visual-object]",
+    "[role='img']",
+    "[class*='icon']",
+    "[class*='Icon']",
+    "[class*='chip']",
+    "[class*='badge']",
     "figure",
     "article",
     "aside",
     "section",
+    "svg",
+    "span",
+    "i",
     "div"
   ].join(",");
 
@@ -85,6 +96,14 @@
     });
     const hasShadow = style.boxShadow && style.boxShadow !== "none";
     return hasBackground || hasBorder || hasShadow;
+  }
+
+  function layoutTextContent(element) {
+    return String(element?.innerText || element?.textContent || "").replace(/\s+/g, " ").trim();
+  }
+
+  function classText(element) {
+    return String(element?.getAttribute?.("class") || "");
   }
 
   ns.mixins.layout = {
@@ -149,7 +168,8 @@ findLayoutItems(textItems = [], imageItems = []) {
 
       const items = [];
       for (const element of Array.from(document.body?.querySelectorAll(LAYOUT_TAG_SELECTOR) || [])) {
-        if (existing.has(element) || !this.isLayoutCandidate(element)) {
+        const layoutRole = this.layoutCandidateRole(element);
+        if (existing.has(element) || !layoutRole) {
           continue;
         }
         items.push({
@@ -158,39 +178,85 @@ findLayoutItems(textItems = [], imageItems = []) {
           element,
           frameElement: element,
           positioned: this.isPositionedImage?.(element, element) || false,
+          layoutRole,
           layoutRisk: this.layoutRiskForElement(element)
         });
       }
       return this.filterNestedLayoutItems(items);
     },
 
-isLayoutCandidate(element) {
-      if (!this.isPageElement?.(element) || element.matches(EXCLUDED_SELECTOR)) {
-        return false;
+layoutCandidateRole(element) {
+      if (!this.isPageElement?.(element)) {
+        return "";
+      }
+      const tag = element.tagName.toLowerCase();
+      if (element.matches(EXCLUDED_SELECTOR) && tag !== "svg") {
+        return "";
       }
       if (element.id === ROOT_ID || element.closest?.(`#${ROOT_ID}`)) {
-        return false;
+        return "";
       }
       if (element.matches("html,body,script,style,nav,[role='navigation']")) {
-        return false;
+        return "";
       }
 
       const rect = element.getBoundingClientRect();
       const viewportArea = Math.max(1, (window.innerWidth || 0) * (window.innerHeight || 0));
-      if (!isVisibleRect(rect, 28, 28) || !intersectsViewport(rect) || rect.width * rect.height > viewportArea * 0.7) {
-        return false;
+      if (!intersectsViewport(rect) || rect.width * rect.height > viewportArea * 0.7) {
+        return "";
       }
 
       const style = getComputedStyle(element);
-      if (!isRendered(style)) {
-        return false;
+      if (!isElementRendered(element)) {
+        return "";
       }
 
-      return element.hasAttribute("data-layout-editable") ||
+      const role = this.visualLayoutRoleForElement(element, style, rect);
+      const minSize = role === "icon" ? 10 : 28;
+      if (!isVisibleRect(rect, minSize, minSize)) {
+        return "";
+      }
+
+      return role;
+    },
+
+isLayoutCandidate(element) {
+      return Boolean(this.layoutCandidateRole(element));
+    },
+
+visualLayoutRoleForElement(element, style, rect) {
+      const tag = element.tagName.toLowerCase();
+      const explicit = element.hasAttribute("data-layout-editable") ||
         element.hasAttribute("data-card") ||
         element.hasAttribute("data-panel") ||
         element.hasAttribute("data-shape") ||
-        hasVisiblePaint(style);
+        element.hasAttribute("data-visual-object");
+      if (explicit) {
+        return "block";
+      }
+
+      const classes = classText(element);
+      const hasIconHint = element.hasAttribute("data-icon") ||
+        element.matches("[role='img']") ||
+        tag === "svg" ||
+        /\b(icon|emoji|glyph|avatar|logo|badge|chip|tag|marker|dot|bullet|symbol)\b/i.test(classes);
+      if (hasIconHint) {
+        return "icon";
+      }
+
+      if (hasVisiblePaint(style)) {
+        return "block";
+      }
+
+      const text = layoutTextContent(element);
+      const fontSize = Number.parseFloat(style.fontSize) || 0;
+      const isShortSymbol = text &&
+        text.length <= 6 &&
+        fontSize >= 15 &&
+        rect.width <= 120 &&
+        rect.height <= 120 &&
+        !element.querySelector("img,svg,canvas,video,table,p,h1,h2,h3,h4,h5,h6");
+      return isShortSymbol ? "icon" : "";
     },
 
 layoutRiskForElement(element) {
@@ -208,6 +274,9 @@ layoutRiskForElement(element) {
 filterNestedLayoutItems(items) {
       const byElement = new Set(items.map((item) => item.element));
       return items.filter((item) => {
+        if (item.layoutRole === "icon") {
+          return true;
+        }
         let parent = item.element.parentElement;
         while (parent && parent !== document.body && parent !== document.documentElement) {
           if (byElement.has(parent) && parent.getBoundingClientRect().width === item.element.getBoundingClientRect().width) {
@@ -357,6 +426,7 @@ layoutAdjustmentFor(item) {
       );
       const storedBaseWidth = decodeLayoutStyleValue(target.style.getPropertyValue(LAYOUT_CUSTOM_PROPS.baseWidth));
       const storedBaseHeight = decodeLayoutStyleValue(target.style.getPropertyValue(LAYOUT_CUSTOM_PROPS.baseHeight));
+      const storedBaseDisplay = decodeLayoutStyleValue(target.style.getPropertyValue(LAYOUT_CUSTOM_PROPS.baseDisplay));
       const width = Number.parseFloat(target.style.getPropertyValue(LAYOUT_CUSTOM_PROPS.width));
       const height = Number.parseFloat(target.style.getPropertyValue(LAYOUT_CUSTOM_PROPS.height));
       const adjustment = {
@@ -370,12 +440,35 @@ layoutAdjustmentFor(item) {
         baseTransformOrigin: target.style.transformOrigin || "",
         baseWidthStyle: storedBaseWidth ?? (target.style.width || ""),
         baseHeightStyle: storedBaseHeight ?? (target.style.height || ""),
+        baseDisplayStyle: storedBaseDisplay ?? (target.style.display || ""),
         hasBaseWidthStyle: storedBaseWidth !== null,
         hasBaseHeightStyle: storedBaseHeight !== null,
+        hasBaseDisplayStyle: storedBaseDisplay !== null,
         risk: item.layoutRisk || "safe"
       };
       this.layoutAdjustments.set(item.id, adjustment);
       return adjustment;
+    },
+
+shouldPromoteInlineLayoutTarget(_item, target) {
+      if (!target?.style) {
+        return false;
+      }
+      const display = getComputedStyle(target).display;
+      return display === "inline";
+    },
+
+ensureLayoutDisplayBase(item, adjustment) {
+      const target = adjustment?.target || this.layoutTargetForItem(item);
+      if (!target?.style || !this.shouldPromoteInlineLayoutTarget(item, target)) {
+        return;
+      }
+      if (!adjustment.hasBaseDisplayStyle) {
+        adjustment.baseDisplayStyle = target.style.display || "";
+        adjustment.hasBaseDisplayStyle = true;
+        target.style.setProperty(LAYOUT_CUSTOM_PROPS.baseDisplay, encodeLayoutStyleValue(adjustment.baseDisplayStyle));
+      }
+      target.style.display = "inline-block";
     },
 
 composeLayoutTransform(adjustment) {
@@ -388,6 +481,12 @@ composeLayoutTransform(adjustment) {
       return [base, movement, resize].filter(Boolean).join(" ");
     },
 
+layoutTransformPriorityFor(target) {
+      const style = target ? getComputedStyle(target) : null;
+      const animationName = String(style?.animationName || "").trim();
+      return animationName && animationName !== "none" ? "important" : "";
+    },
+
 applyLayoutAdjustment(item, adjustment) {
       const target = adjustment?.target || this.layoutTargetForItem(item);
       if (!target || !adjustment) {
@@ -398,6 +497,9 @@ applyLayoutAdjustment(item, adjustment) {
       adjustment.y = round(clamp(adjustment.y || 0, -4000, 4000));
       adjustment.scale = round(clamp(adjustment.scale || 1, 0.2, 5), 3);
       const hasLayoutAdjustment = adjustment.x || adjustment.y || adjustment.scale !== 1;
+      if (hasLayoutAdjustment) {
+        this.ensureLayoutDisplayBase(item, adjustment);
+      }
       if (hasLayoutAdjustment) {
         target.style.setProperty(LAYOUT_CUSTOM_PROPS.x, String(Math.round(adjustment.x)));
         target.style.setProperty(LAYOUT_CUSTOM_PROPS.y, String(Math.round(adjustment.y)));
@@ -423,8 +525,10 @@ applyLayoutAdjustment(item, adjustment) {
       } else {
         target.style.removeProperty("transform-origin");
       }
-      target.style.transform = this.composeLayoutTransform(adjustment);
-      if (!target.style.transform) {
+      const transform = this.composeLayoutTransform(adjustment);
+      if (transform) {
+        target.style.setProperty("transform", transform, this.layoutTransformPriorityFor(target));
+      } else {
         target.style.removeProperty("transform");
       }
     },
@@ -700,6 +804,7 @@ ensureLayoutSizeBase(adjustment, axes) {
       if (!target?.style) {
         return;
       }
+      this.ensureLayoutDisplayBase(null, adjustment);
       if (axes.width && !adjustment.hasBaseWidthStyle) {
         adjustment.baseWidthStyle = target.style.width || "";
         adjustment.hasBaseWidthStyle = true;
@@ -1084,8 +1189,10 @@ styleWithoutLayoutAdjustment(target, adjustment) {
       clone.setAttribute("style", target.getAttribute("style") || "");
       const storedBaseWidth = decodeLayoutStyleValue(clone.style.getPropertyValue(LAYOUT_CUSTOM_PROPS.baseWidth));
       const storedBaseHeight = decodeLayoutStyleValue(clone.style.getPropertyValue(LAYOUT_CUSTOM_PROPS.baseHeight));
+      const storedBaseDisplay = decodeLayoutStyleValue(clone.style.getPropertyValue(LAYOUT_CUSTOM_PROPS.baseDisplay));
       const baseWidth = adjustment?.hasBaseWidthStyle ? adjustment.baseWidthStyle : storedBaseWidth;
       const baseHeight = adjustment?.hasBaseHeightStyle ? adjustment.baseHeightStyle : storedBaseHeight;
+      const baseDisplay = adjustment?.hasBaseDisplayStyle ? adjustment.baseDisplayStyle : storedBaseDisplay;
       clone.style.removeProperty(LAYOUT_CUSTOM_PROPS.x);
       clone.style.removeProperty(LAYOUT_CUSTOM_PROPS.y);
       clone.style.removeProperty(LAYOUT_CUSTOM_PROPS.scale);
@@ -1094,6 +1201,7 @@ styleWithoutLayoutAdjustment(target, adjustment) {
       clone.style.removeProperty(LAYOUT_CUSTOM_PROPS.baseTransform);
       clone.style.removeProperty(LAYOUT_CUSTOM_PROPS.baseWidth);
       clone.style.removeProperty(LAYOUT_CUSTOM_PROPS.baseHeight);
+      clone.style.removeProperty(LAYOUT_CUSTOM_PROPS.baseDisplay);
       if (baseWidth !== null && baseWidth !== undefined) {
         if (baseWidth) {
           clone.style.width = baseWidth;
@@ -1106,6 +1214,13 @@ styleWithoutLayoutAdjustment(target, adjustment) {
           clone.style.height = baseHeight;
         } else {
           clone.style.removeProperty("height");
+        }
+      }
+      if (baseDisplay !== null && baseDisplay !== undefined) {
+        if (baseDisplay) {
+          clone.style.display = baseDisplay;
+        } else {
+          clone.style.removeProperty("display");
         }
       }
       const base = normalizedTransform(adjustment?.baseTransform);
@@ -1188,7 +1303,8 @@ isLayoutCurrentlyAdjusted(item) {
         target.style.getPropertyValue(LAYOUT_CUSTOM_PROPS.width) ||
         target.style.getPropertyValue(LAYOUT_CUSTOM_PROPS.height) ||
         target.style.getPropertyValue(LAYOUT_CUSTOM_PROPS.baseWidth) ||
-        target.style.getPropertyValue(LAYOUT_CUSTOM_PROPS.baseHeight)
+        target.style.getPropertyValue(LAYOUT_CUSTOM_PROPS.baseHeight) ||
+        target.style.getPropertyValue(LAYOUT_CUSTOM_PROPS.baseDisplay)
       );
     },
 
